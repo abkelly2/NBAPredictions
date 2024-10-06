@@ -1,0 +1,38 @@
+/* src/components/Layout.css */
+
+.App {
+    font-family: Arial, sans-serif;
+  }
+  
+  .header {
+    background-color: #282c34;
+    padding: 20px;
+    color: white;
+    text-align: center;
+  }
+  
+  .main-content {
+    display: flex;
+    height: calc(100vh - 100px); /* Full height minus header */
+  }
+  
+  .my-picks {
+    flex: 7;
+    background-color: #f0f0f0;
+    padding: 20px;
+  }
+  
+  .other-picks {
+    flex: 3;
+    background-color: #e0e0e0;
+    padding: 20px;
+  }
+  
+  .my-picks-box, .other-picks-box {
+    border: 1px solid #ccc;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    background-color: white;
+  }
+  
