@@ -1,0 +1,100 @@
+/* src/components/Header.css */
+
+/* Gradient and polished background */
+.header-container {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #202a43 100%);
+    padding: 20px 40px;
+    border-radius: 0 0 30px 30px;
+    box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.2);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    transition: all 0.4s ease;
+  }
+  
+  /* Flexbox layout for centering content */
+  .header-content {
+    max-width: 1200px;
+    margin: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  /* Left section of the header for titles and subtitles */
+  .header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  /* Title font and shadow */
+  .header-title {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    font-size: 36px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 1px;
+    text-shadow: 3px 3px 12px rgba(0, 0, 0, 0.4);
+  }
+  
+  /* Subtitle for a refined touch */
+  .header-subtitle {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 16px;
+    color: #c9d6ff;
+    margin: 0;
+    letter-spacing: 0.5px;
+  }
+  
+  /* Modern home button with subtle glow effect */
+  .go-home-button {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    padding: 10px 25px;
+    color: white;
+    text-decoration: none;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 15px;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  .go-home-button .home-icon {
+    color: #ffffff;
+    transition: transform 0.3s ease;
+  }
+  
+  /* Button glow and animation */
+  .go-home-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.3), 0px 0px 20px rgba(255, 255, 255, 0.7);
+    transform: translateY(-3px);
+  }
+  
+  .go-home-button:hover .home-icon {
+    transform: rotate(15deg);
+  }
+  
+  /* Transition for mobile view */
+  @media (max-width: 768px) {
+    .header-title {
+      font-size: 28px;
+    }
+  
+    .header-subtitle {
+      font-size: 14px;
+    }
+  
+    .go-home-button {
+      padding: 8px 18px;
+      font-size: 14px;
+    }
+  }
+  

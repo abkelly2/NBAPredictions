@@ -36,3 +36,92 @@
     background-color: white;
   }
   
+
+/* ---------------------Styling for the my-picks box */
+
+.my-picks-box {
+    border: 1px solid #ccc;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    background-color: white;
+    margin-top: 20px;
+  }
+  
+  /* Styling for auth sections (Sign Up and Login side by side) */
+  .auth-forms {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+  }
+  
+  .auth-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 45%;
+  }
+  
+  .auth-section h3 {
+    margin-bottom: 15px;
+    font-size: 1.5em;
+  }
+  
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+  }
+  
+  /* Styling for input fields */
+  .auth-form input {
+    padding: 10px;
+    width: 80%;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1em;
+  }
+  
+  /* Styling for auth buttons */
+  .auth-button {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    font-size: 1.2em;
+  }
+  
+  .auth-button:hover {
+    background-color: #0056b3;
+    transform: translateY(-3px);
+  }
+  
+  /* Error message styling */
+  .error-message {
+    color: red;
+    margin-bottom: 15px;
+  }
+
+  /* Styling for the Make Picks button */
+.make-picks-button {
+    padding: 10px 15px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1em;
+  }
+  
+  .make-picks-button:hover {
+    background-color: #218838;
+  }
+  
+
+
