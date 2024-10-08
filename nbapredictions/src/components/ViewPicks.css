@@ -1,0 +1,21 @@
+.view-picks-container {
+    padding: 20px;
+  }
+  
+  .selection-section {
+    margin-bottom: 20px;
+  }
+  
+  .selection-section h3 {
+    margin-bottom: 10px;
+  }
+  
+  .selection-section ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .selection-section li {
+    margin-bottom: 5px;
+  }
+  

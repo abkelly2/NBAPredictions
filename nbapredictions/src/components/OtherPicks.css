@@ -1,0 +1,46 @@
+/* src/components/OtherPicks.css */
+
+.other-picks-box {
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+  }
+  
+  .user-picks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Add space between each user card */
+  }
+  
+  .user-pick-card {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .user-pick-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .profile-picture {
+    width: 80px;  /* Make the picture bigger */
+    height: 80px; /* Keep it square */
+    margin-right: 20px; /* Add space between picture and name */
+    object-fit: cover;  /* Ensures the image fits inside the square */
+    border-radius: 10px; /* Make it square with rounded corners */
+  }
+  
+  .user-pick-card h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin: 0;  /* Ensure there’s no extra margin */
+  }
+  

@@ -3,6 +3,7 @@ import React from 'react';
 import Header from './components/Header';
 import MyPicks from './components/MyPicks';
 import OtherPicks from './components/OtherPicks';
+import ViewPicks from './components/ViewPicks';
 import SignUp from './components/SignUp';
 import Login from './components/Login';
 import MakePicks from './components/MakePicks'; // Import MakePicks component
@@ -21,6 +22,8 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
           <Route path="/make-picks" element={<MakePicks />} /> {/* New Route for MakePicks */}
+          <Route path="/picks/:userId" element={<ViewPicks />} />
+
         
           {/* Main content */}
           <Route

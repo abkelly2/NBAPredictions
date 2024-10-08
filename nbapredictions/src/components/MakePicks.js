@@ -2,10 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom'; // Import ReactDOM for the portal
 import { db } from '../firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, addDoc } from 'firebase/firestore'; // Import addDoc for saving selections
 import './MakePicks.css';
+import { getAuth } from 'firebase/auth'; // Import Firebase Auth
+
 
 function MakePicks() {
+  const auth = getAuth();
+  const currentUser = auth.currentUser; // Access the currently logged-in user
   const [teams, setTeams] = useState([]);
   const [players, setPlayers] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
@@ -49,7 +53,6 @@ function MakePicks() {
 
   const getTeamImageFilename = (name) => `/team_images/${name.toLowerCase().replace(/ /g, '-')}.jpg`;
   const getPlayerImageFilename = (name) => {
-    // Remove periods, commas, and handle "Jr."
     const sanitizedName = name
       .toLowerCase()
       .replace(/\./g, '')
@@ -61,7 +64,6 @@ function MakePicks() {
     return `/player_images/${sanitizedName.replace(/ /g, '-')}.jpg`;
   };
   
-
   const handleAddClick = (index, category, event) => {
     const rect = event.target.getBoundingClientRect();
     setSearchBoxPosition({ top: rect.top + window.scrollY, left: rect.left + window.scrollX });
@@ -226,6 +228,63 @@ function MakePicks() {
     </div>
   );
 
+  // Check if all selections are made
+  const areAllSelectionsMade = () => {
+    return (
+      !eastPlayoffTeams.includes(null) &&
+      !westPlayoffTeams.includes(null) &&
+      ecfWinner &&
+      wcfWinner &&
+      mvp &&
+      dpoy &&
+      roty &&
+      sixthMan &&
+      mip &&
+      coachOfTheYear &&
+      !allNBAFirstTeam.includes(null) &&
+      !allNBASecondTeam.includes(null) &&
+      !allNBAThirdTeam.includes(null) &&
+      !allRookieTeam.includes(null) &&
+      worstTeam
+    );
+  };
+
+  // Handle lock selections button click
+  const handleLockSelections = async () => {
+    if (!areAllSelectionsMade()) {
+      alert('Please make all selections before locking them.');
+      return;
+    }
+
+    try {
+      // Save the picks to the Firestore database
+      await addDoc(collection(db, 'userPicks'), {
+        username: currentUser.email,
+        eastPlayoffTeams,
+        westPlayoffTeams,
+        ecfWinner,
+        wcfWinner,
+        mvp,
+        dpoy,
+        roty,
+        sixthMan,
+        mip,
+        coachOfTheYear,
+        allNBAFirstTeam,
+        allNBASecondTeam,
+        allNBAThirdTeam,
+        allRookieTeam,
+        worstTeam,
+      });
+
+      alert('Your selections have been locked successfully!');
+    } catch (error) {
+      console.error('Error saving selections: ', error);
+      alert('An error occurred while saving your selections. Please try again.');
+    }
+  };
+  
+
   return (
     <div className="make-picks-container">
       <h2>Make Your Picks</h2>
@@ -248,6 +307,11 @@ function MakePicks() {
       {renderSelectionSection('All-NBA Third Team', allNBAThirdTeam, 'allNBAThirdTeam')}
       {renderSelectionSection('All-Rookie Team', allRookieTeam, 'allRookieTeam')}
       {renderSelectionSection('Worst NBA Team', [worstTeam], 'worstTeam')}
+
+      {/* Lock Selections Button */}
+      <button className="lock-selections-button" onClick={handleLockSelections}>
+        Lock Selections
+      </button>
     </div>
   );
 }
