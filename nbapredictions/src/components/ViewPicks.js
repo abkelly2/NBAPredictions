@@ -9,6 +9,7 @@ function ViewPicks() {
   const [userPicks, setUserPicks] = useState(null);
   const [profilePicUrl, setProfilePicUrl] = useState(''); // For fetching profile picture
   const [loading, setLoading] = useState(true); // Track loading state
+  const [spunPlayer, setSpunPlayer] = useState(null); // State for the spun player
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,6 +36,13 @@ function ViewPicks() {
             const profileDoc = profilesSnapshot.docs[0];
             setProfilePicUrl(profileDoc.data().profilePicUrl);
               // Set profile picture URL
+
+              const spinsQuery = query(collection(db, 'userSpins'), where('username', '==', username));
+              const spinsSnapshot = await getDocs(spinsQuery);
+              if (!spinsSnapshot.empty) {
+                const spinDoc = spinsSnapshot.docs[0];
+                setSpunPlayer(spinDoc.data().spunPlayer); // Set spun player
+              }
           } else {
             console.log("No user profile document found!");
             console.log(profilesSnapshot);
@@ -144,6 +152,26 @@ function ViewPicks() {
     </div>
   );
 
+  const renderSpunPlayerSection = () => (
+    spunPlayer && (
+      <div className="selection-section">
+        <h3>Spun Player</h3>
+        <div className="team-selection">
+          <div className="team-slot">
+            <div className="team-info">
+              <img
+                src={getPlayerImageFilename(spunPlayer)}
+                alt={spunPlayer}
+                className="team-image"
+              />
+              <span>{spunPlayer}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  );
+
   return (
     <div className="view-picks-container">
       <div className="profile-header">
@@ -176,6 +204,10 @@ function ViewPicks() {
       {renderSelectionSection('All-NBA Third Team', userPicks.allNBAThirdTeam, 'allNBAThirdTeam')}
       {renderSelectionSection('All-Rookie Team', userPicks.allRookieTeam, 'allRookieTeam')}
       {renderSelectionSection('Worst NBA Team', [userPicks.worstTeam], 'worstTeam')}
+      {renderSpunPlayerSection()}
+
+
+      
     </div>
   );
 }

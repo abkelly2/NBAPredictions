@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db, storage } from '../firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, setPersistence, browserSessionPersistence } from 'firebase/auth';
-import { collection, doc, getDoc, setDoc, updateDoc, query, where, getDocs } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc, updateDoc, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'; 
 import { Link } from 'react-router-dom';
 import './MakePicks.css';
 import ReactDOM from 'react-dom';
 import { getAuth } from 'firebase/auth';
+import { Wheel } from 'react-custom-roulette';
+import Confetti from 'react-confetti';
 
 
 function MyPicks() {
@@ -23,13 +25,24 @@ function MyPicks() {
   const [selectedId, setSelectedId] = useState('');
   const [searchBoxPosition, setSearchBoxPosition] = useState({ top: 0, left: 0 });
   const [teams, setTeams] = useState([]);
+  const [spunPlayer, setSpunPlayer] = useState(null);
+  const [hasSpun, setHasSpun] = useState(false); // Tracks if the user has spun the wheel
+  const [wheelData, setWheelData] = useState([]); // Data for the wheel
+  const [mustSpin, setMustSpin] = useState(false); // Determines if the wheel is spinning
+  const [prizeNumber, setPrizeNumber] = useState(0); // State for the spun player
   const [players, setPlayers] = useState([]);
   const [coaches, setCoaches] = useState([]); // New state for coaches
   const [profilePicUrl, setProfilePicUrl] = useState(''); // Add this line to store the profile picture URL
-
+  const [showConfetti, setShowConfetti] = useState(false); // For the confetti effect
+  const [windowDimensions, setWindowDimensions] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
 
   const usernameToEmail = (username) => `${username}@example.com`;
-
+  const getPlayerImageFilename = (name) => `/player_images/${name.toLowerCase().replace(/ /g, '-')}.jpg`;
+  const auth = getAuth();
+  const currentUser = auth.currentUser; // Get the current logged-in user
   // Handle profile picture change
   const handleProfilePicChange = async (e) => {
     const file = e.target.files[0]; // Get the selected file
@@ -165,9 +178,10 @@ const handleSignUp = async (e) => {
       const fetchPicks = async () => {
         const auth = getAuth(); // Get the auth object
     const currentUser = auth.currentUser; // Access the current user
+    
 
     if (currentUser) {
-      const profilesQuery = query(collection(db, 'userProfiles'), where('username', '==', currentUser.email));
+      const profilesQuery = query(collection(db, 'userProfiles'), where('username', '==', user.email));
       const profilesSnapshot = await getDocs(profilesQuery);
 
       if (!profilesSnapshot.empty) {
@@ -187,6 +201,13 @@ const handleSignUp = async (e) => {
           const docSnap = querySnapshot.docs[0];
           console.log('Selections found:', docSnap.data());
           setSelections(docSnap.data());
+
+          const spinsQuery = query(collection(db, 'userSpins'), where('username', '==', username));
+          const spinsSnapshot = await getDocs(spinsQuery);
+          if (!spinsSnapshot.empty) {
+            const spinDoc = spinsSnapshot.docs[0];
+            setSpunPlayer(spinDoc.data().spunPlayer); // Set spun player
+          }
         } else {
           console.log('No selections found for username:', username);
           setSelections(null);
@@ -200,6 +221,11 @@ const handleSignUp = async (e) => {
   // Fetch teams, players, and coaches
   useEffect(() => {
     const fetchData = async () => {
+
+      if (!currentUser || !currentUser.email) {
+        console.error("User is not logged in.");
+        return; // Exit early if no user is logged in
+      }
       
       const teamsCollection = collection(db, 'nbaTeams');
       const playersCollection = collection(db, 'nbaPlayers');
@@ -218,11 +244,74 @@ const handleSignUp = async (e) => {
 
       setTeams(teamsList);
       setPlayers(playersList);
-      setCoaches(coachesList); // Save coaches list with formatted name and team
+      setCoaches(coachesList);// Save coaches list with formatted name and team
+      
+      const formattedWheelData = playersList.map(player => ({
+        option: player,
+      }));
+      setWheelData(formattedWheelData);
+
+      const userSpinQuery = query(
+        collection(db, 'userSpins'),
+        where('username', '==', currentUser.email)
+      );
+      const querySnapshot = await getDocs(userSpinQuery);
+      if (!querySnapshot.empty) {
+        setHasSpun(true);
+        const spinData = querySnapshot.docs[0].data();
+        setSpunPlayer(spinData.spunPlayer);
+      }
+    
+
+
     };
 
     fetchData();
-  }, []);
+  }, [currentUser]);
+
+
+
+
+  const handleSpinWheel = () => {
+    if (hasSpun) {
+      alert('You have already spun the wheel!');
+      return;
+    }
+
+    // Randomly select a prize index (player)
+    const newPrizeNumber = Math.floor(Math.random() * wheelData.length);
+    setPrizeNumber(newPrizeNumber);
+    setMustSpin(true); // Start the wheel spin
+  };
+
+  const handleSpinComplete = () => {
+    const randomPlayer = wheelData[prizeNumber].option;
+    setSpunPlayer(randomPlayer);
+    setHasSpun(true); // Mark as spun
+    setShowConfetti(true); // Show confetti
+
+    // Auto-hide confetti after 5 seconds
+    setTimeout(() => {
+      setShowConfetti(false);
+    }, 5000);
+
+    // Save the spun player to Firestore
+    try {
+      addDoc(collection(db, 'userSpins'), {
+        username: currentUser.email,
+        spunPlayer: randomPlayer,
+      });
+    } catch (error) {
+      console.error('Error saving spun player: ', error);
+      alert('An error occurred while saving your spun player.');
+    }
+  };
+
+  
+  
+
+
+
 
   
 
@@ -374,6 +463,26 @@ const handleSignUp = async (e) => {
       document.body
     );
   };
+
+  const renderSpunPlayerSection = () => (
+    spunPlayer && (
+      <div className="selection-section">
+        <h3>Spun Player</h3>
+        <div className="team-selection">
+          <div className="team-slot">
+            <div className="team-info">
+              <img
+                src={getPlayerImageFilename(spunPlayer)}
+                alt={spunPlayer}
+                className="team-image"
+              />
+              <span>{spunPlayer}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  );
   
 
 
@@ -416,9 +525,19 @@ const handleSignUp = async (e) => {
 
   // Handle saving selections
   const saveSelections = async () => {
+
+    if (!currentUser || !currentUser.email) {
+      alert('User is not logged in or email is missing.');
+      return;
+    }
+
+    console.log("1");
     if (user && selections) {
-      const username = user.email;
+      console.log("2");
+      const username = currentUser.email;
+      console.log(username);
       const picksQuery = query(collection(db, 'userPicks'), where('username', '==', username));
+      console.log("3");
       const querySnapshot = await getDocs(picksQuery);
 
       if (!querySnapshot.empty) {
@@ -536,12 +655,85 @@ const handleSignUp = async (e) => {
           {renderSelectionSection('All-Rookie Team', selections.allRookieTeam, 'allRookieTeam')}
           {renderSelectionSection('Worst NBA Team', [selections.worstTeam], 'worstTeam')}
 
+          <div className="spin-the-wheel-container">
+        {spunPlayer ? (
+          <div className="selection-section">
+            <h3>Your Spun Player</h3>
+            <div className="team-selection">
+              <div className="team-slot" style={{ width: '100%' }}>
+                <div className="team-info">
+                  <img
+                    src={`/player_images/${spunPlayer.toLowerCase().replace(/ /g, '-')}.jpg`}
+                    alt={spunPlayer}
+                    className="player-image"
+                  />
+                  <span>{spunPlayer}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ position: 'relative' }}>
+            {wheelData && wheelData.length > 0 ? (
+              <>
+                <Wheel
+                  mustStartSpinning={mustSpin}
+                  prizeNumber={prizeNumber}
+                  data={wheelData}
+                  onStopSpinning={handleSpinComplete}
+                />
+                {!hasSpun && (
+                  <button className="spin-the-wheel-button" onClick={handleSpinWheel}>
+                    Spin the Wheel!
+                  </button>
+                )}
+              </>
+            ) : (
+              <p>Loading wheel data...</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Confetti effect */}
+      {showConfetti && (
+        <div
+          style={{
+            position: 'absolute',
+            top: window.scrollY,
+            left: 0,
+            width: windowDimensions.width,
+            height: windowDimensions.height,
+            zIndex: 9999,
+          }}
+        >
+          <Confetti
+            width={windowDimensions.width}
+            height={windowDimensions.height}
+            numberOfPieces={500}
+            recycle={false}
+          />
+        </div>
+      )}
+
+          
+
+
+
+
+          
+
           {/* Save Selections Button */}
           <button className="lock-selections-button" onClick={saveSelections}>
             Save Selections
           </button>
         </div>
       )}
+
+      
+
+
+      
 
       {!selections && user && (
         <div>
