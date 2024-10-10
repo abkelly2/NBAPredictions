@@ -8,6 +8,8 @@ import SignUp from './components/SignUp';
 import Login from './components/Login';
 import MakePicks from './components/MakePicks'; // Import MakePicks component
 import './components/Layout.css';
+import Legacy from './components/Legacy';
+import ScoringPage from './components/ScoringPage';  // Import the new Legacy page
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 
 function App() {
@@ -23,6 +25,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/make-picks" element={<MakePicks />} /> {/* New Route for MakePicks */}
           <Route path="/picks/:userId" element={<ViewPicks />} />
+          <Route path="/legacy" element={<Legacy />} />
+          <Route path="/scoring" element={<ScoringPage />} />
 
         
           {/* Main content */}

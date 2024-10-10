@@ -6,6 +6,8 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Link } from 'react-router-dom';
 import './MakePicks.css';
 import ReactDOM from 'react-dom';
+import { getAuth } from 'firebase/auth';
+
 
 function MyPicks() {
   const [signUpUsername, setSignUpUsername] = useState('');
@@ -23,46 +25,111 @@ function MyPicks() {
   const [teams, setTeams] = useState([]);
   const [players, setPlayers] = useState([]);
   const [coaches, setCoaches] = useState([]); // New state for coaches
+  const [profilePicUrl, setProfilePicUrl] = useState(''); // Add this line to store the profile picture URL
+
 
   const usernameToEmail = (username) => `${username}@example.com`;
 
   // Handle profile picture change
-  const handleProfilePicChange = (e) => {
-    setProfilePic(e.target.files[0]);
+  const handleProfilePicChange = async (e) => {
+    const file = e.target.files[0]; // Get the selected file
+    if (file) {
+      try {
+        const user = auth.currentUser; // Get the currently logged-in user
+        
+        // Check if user is authenticated
+        if (!user) {
+          throw new Error("User is not authenticated.");
+        }
+        
+        const profilePicRef = ref(storage, `profilePictures/${user.uid}`);
+        await uploadBytes(profilePicRef, file); // Upload the file to Firebase Storage
+        const newProfilePicUrl = await getDownloadURL(profilePicRef); // Get the URL of the uploaded file
+    
+        // Add a timestamp query parameter to the URL to prevent caching issues
+        const timestampedProfilePicUrl = `${newProfilePicUrl}?t=${new Date().getTime()}`;
+    
+        // Reference the user profile document in Firestore
+        const userProfileDocRef = doc(db, 'userProfiles', user.uid);
+        const docSnap = await getDoc(userProfileDocRef); // Check if the document exists
+    
+        if (docSnap.exists()) {
+          // Update the document with the new profile picture URL if it exists
+          await updateDoc(userProfileDocRef, { profilePicUrl: timestampedProfilePicUrl });
+        } else {
+          // Create the document with the new profile picture URL if it doesn't exist
+          await setDoc(userProfileDocRef, {
+            username: user.email,
+            profilePicUrl: timestampedProfilePicUrl,
+          });
+        }
+    
+        // Update the state with the new profile picture URL
+        setProfilePicUrl(timestampedProfilePicUrl);
+    
+        alert('Profile picture updated successfully!');
+      } catch (error) {
+        console.error('Error updating profile picture:', error);
+        alert('Failed to update profile picture. Please try again.');
+      }
+    }
   };
 
-  // Handle sign-up
-  const handleSignUp = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    if (signUpPassword.length < 6) {
-      setError('Password should be at least 6 characters long.');
-      return;
-    }
-
+  // Upload profile picture after user signs up
+const uploadProfilePicAfterSignUp = async (user) => {
+  if (profilePic) {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, usernameToEmail(signUpUsername), signUpPassword);
-      const user = userCredential.user;
+      const profilePicRef = ref(storage, `profilePictures/${user.uid}`);
+      await uploadBytes(profilePicRef, profilePic); // Upload the file to Firebase Storage
+      const profilePicUrl = await getDownloadURL(profilePicRef); // Get the URL of the uploaded file
 
-      let profilePicUrl = '';
-      if (profilePic) {
-        const profilePicRef = ref(storage, `profilePictures/${user.uid}`);
-        await uploadBytes(profilePicRef, profilePic);
-        profilePicUrl = await getDownloadURL(profilePicRef);
-      }
-
-      await setDoc(doc(db, 'userProfiles', user.uid), {
-        username: signUpUsername,
+      // Add the profile picture URL to the user's Firestore document
+      await updateDoc(doc(db, 'userProfiles', user.uid), {
         profilePicUrl,
       });
 
-      setUser(user);
-      alert('Account created successfully!');
-    } catch (err) {
-      setError(err.message);
+      // Update the profile picture URL in the state
+      setProfilePicUrl(profilePicUrl);
+    } catch (error) {
+      console.error('Error uploading profile picture after sign up:', error);
     }
-  };
+  }
+};
+
+
+  // Handle sign-up
+  // Handle sign-up
+const handleSignUp = async (e) => {
+  e.preventDefault();
+  setError('');
+
+  if (signUpPassword.length < 6) {
+    setError('Password should be at least 6 characters long.');
+    return;
+  }
+
+  try {
+    // Sign up the user and authenticate them
+    const userCredential = await createUserWithEmailAndPassword(auth, usernameToEmail(signUpUsername), signUpPassword);
+    const user = userCredential.user;
+
+    // Create a Firestore document for the user profile (without profilePicUrl yet)
+    await setDoc(doc(db, 'userProfiles', user.uid), {
+      username: `${signUpUsername.toLowerCase()}@example.com`,
+      profilePicUrl: '', // Profile pic will be updated later
+    });
+
+    // Upload the profile picture after authentication
+    await uploadProfilePicAfterSignUp(user);
+
+    setUser(user); // Update the user state
+    alert('Account created successfully!');
+  } catch (err) {
+    setError(err.message);
+  }
+};
+
+  
 
   // Handle login
   const handleLogin = async (e) => {
@@ -96,7 +163,19 @@ function MyPicks() {
   useEffect(() => {
     if (user) {
       const fetchPicks = async () => {
-        if (!user) return;
+        const auth = getAuth(); // Get the auth object
+    const currentUser = auth.currentUser; // Access the current user
+
+    if (currentUser) {
+      const profilesQuery = query(collection(db, 'userProfiles'), where('username', '==', currentUser.email));
+      const profilesSnapshot = await getDocs(profilesQuery);
+
+      if (!profilesSnapshot.empty) {
+        const profileDoc = profilesSnapshot.docs[0];
+        setProfilePicUrl(profileDoc.data().profilePicUrl); // Fetch profile picture for logged-in user
+      }
+    }
+        
 
         const username = user.email; 
         console.log('Fetching picks for username:', username);
@@ -121,6 +200,7 @@ function MyPicks() {
   // Fetch teams, players, and coaches
   useEffect(() => {
     const fetchData = async () => {
+      
       const teamsCollection = collection(db, 'nbaTeams');
       const playersCollection = collection(db, 'nbaPlayers');
       const coachesCollection = collection(db, 'nbaCoaches'); // Assuming coaches are in Firestore under 'nbaCoaches'
@@ -143,6 +223,8 @@ function MyPicks() {
 
     fetchData();
   }, []);
+
+  
 
   // Close search box on "Escape" key press
   useEffect(() => {
@@ -168,18 +250,71 @@ function MyPicks() {
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
-    const list = ['eastPlayoffTeams', 'westPlayoffTeams', 'ecfWinner', 'wcfWinner', 'worstTeam'].includes(selectedId.split('-')[0]) 
+    const list = ['eastPlayoffTeams', 'westPlayoffTeams', 'ecfWinner', 'ecfLoser', 'wcfWinner', 'wcfLoser', 'nbaChampion', 'midSeasonCupChampion', 'worstTeam'].includes(selectedId.split('-')[0]) 
       ? teams 
       : selectedId.split('-')[0] === 'coachOfTheYear' 
-        ? coaches // If it's the coach category, search in the coaches list
+        ? coaches 
         : players;
-    
+  
     setSearchResults(list.filter(item => item.toLowerCase().includes(e.target.value.toLowerCase())));
   };
 
   const handleSelectItem = (item) => {
     const category = selectedId.split('-')[0];
     const index = parseInt(selectedId.split('-')[1], 10);
+    if (item === 'Memphis Grizzlies') {
+      const audio = new Audio('/grizzlies.mp3'); // Ensure this path is correct based on where your audio is stored
+      audio.play();
+    }
+
+    
+    if (item.toLowerCase().includes('lebron')) {
+      const lebronAudio = new Audio('/lebron.mp3');
+      lebronAudio.play();
+    
+      // Add the golden tint when the audio starts playing
+      document.body.classList.add('golden-tint');
+    
+      // Stop the audio and remove the golden tint after 7 seconds
+      setTimeout(() => {
+        lebronAudio.pause();
+        lebronAudio.currentTime = 0; // Reset to start of the audio
+    
+        // Remove the golden tint after the audio has been stopped
+        document.body.classList.remove('golden-tint');
+      }, 7000); // 7 seconds
+    }
+    
+
+    if (item.toLowerCase().includes('tatum')) {
+      const lebronAudio = new Audio('/tatum.mp3');
+      lebronAudio.play();
+  
+      // Stop audio after 6 seconds
+      setTimeout(() => {
+        lebronAudio.pause();
+        lebronAudio.currentTime = 0; // Reset to start of the audio
+      }, 12000); // 6000 milliseconds = 6 seconds
+    }
+
+    if (item.toLowerCase().includes('morant')) {
+      const lebronAudio = new Audio('/morant.mp3');
+      lebronAudio.play();
+    }
+
+    if (item.toLowerCase().includes('anthony edwards')) {
+      const lebronAudio = new Audio('/ant.mp3');
+      lebronAudio.play();
+    }
+    if (item.toLowerCase().includes('anthony davis')) {
+      const lebronAudio = new Audio('/davis.mp3');
+      lebronAudio.play();
+    }
+
+    if (item.toLowerCase().includes('curry')) {
+      const lebronAudio = new Audio('/curry.mp3');
+      lebronAudio.play();
+    }
 
     // Update selections based on category
     setSelections(prev => {
@@ -196,10 +331,14 @@ function MyPicks() {
     setSearchQuery('');
     setSelectedId('');
   };
-  
-  const capitalizeFirstLetter = (str) => {
-    return str.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('_');
+  const formatCoachImageFilename = (coachNameAndTeam) => {
+    return coachNameAndTeam
+      .toLowerCase()
+      .replace(/ - /g, '-') // Replace ' - ' with a single hyphen
+      .replace(/ /g, '-') // Replace spaces with hyphens
+      + '.jpg'; // Append .jpg extension
   };
+
   const renderSearchBox = (index, category) => {
     return ReactDOM.createPortal(
       <div className="search-box" style={{ top: searchBoxPosition.top + 40, left: searchBoxPosition.left }} onClick={(e) => e.stopPropagation()}>
@@ -211,28 +350,34 @@ function MyPicks() {
           onClick={(e) => e.stopPropagation()} // Prevent the click from closing or moving the search box
         />
         <div className="search-results">
-          {searchResults.map((result, idx) => (
-            <div key={idx} className="search-result-item" onClick={() => handleSelectItem(result)}>
-              <img
-                src={
-                  category === 'coachOfTheYear'
-                    ? `/coach_images/${capitalizeFirstLetter(result.toLowerCase().replace(/ /g, '_').replace(/-/g, ''))}.jpg` // Capitalize coach names
-                    : ['eastPlayoffTeams', 'westPlayoffTeams', 'ecfWinner', 'wcfWinner', 'worstTeam'].includes(category)
-                    ? `/team_images/${result.toLowerCase().replace(/ /g, '-')}.jpg`
-                    : `/player_images/${result.toLowerCase().replace(/ /g, '-')}.jpg`
-                }
-                alt={result}
-                className="search-team-image"
-              />
-              {result}
-            </div>
-          ))}
+          {searchResults.map((result, idx) => {
+            const formattedCoachName = formatCoachImageFilename(result); // Ensure coach name is formatted correctly
+            return (
+              <div key={idx} className="search-result-item" onClick={() => handleSelectItem(result)}>
+                <img
+                  src={
+                    category === 'coachOfTheYear'
+                      ? `/coach_images/${formattedCoachName}` // Use the formatted name for the image URL
+                      : ['eastPlayoffTeams', 'westPlayoffTeams', 'ecfWinner', 'ecfLoser', 'wcfWinner', 'wcfLoser', 'nbaChampion', 'midSeasonCupChampion', 'worstTeam'].includes(category)
+                      ? `/team_images/${result.toLowerCase().replace(/ /g, '-')}.jpg`
+                      : `/player_images/${result.toLowerCase().replace(/ /g, '-')}.jpg`
+                  }
+                  alt={result}
+                  className="search-team-image"
+                />
+                {result}
+              </div>
+            );
+          })}
         </div>
       </div>,
       document.body
     );
   };
+  
 
+
+  
   const renderSelectionSection = (title, items, category, showRankings = false) => (
     <div className="selection-section">
       <h3>{title}</h3>
@@ -245,10 +390,10 @@ function MyPicks() {
                 <img
                   src={
                     category === 'coachOfTheYear'
-                      ? `/coach_images/${item.toLowerCase().replace(/ /g, '_').replace(/-/g, '')}.jpg`
-                      : ['eastPlayoffTeams', 'westPlayoffTeams', 'ecfWinner', 'wcfWinner', 'worstTeam'].includes(category)
-                      ? `/team_images/${item.toLowerCase().replace(/ /g, '-')}.jpg`
-                      : `/player_images/${item.toLowerCase().replace(/ /g, '-')}.jpg`
+                      ? `/coach_images/${formatCoachImageFilename(item)}` // Coach images
+                      : ['eastPlayoffTeams', 'westPlayoffTeams', 'ecfWinner', 'ecfLoser', 'wcfWinner', 'wcfLoser', 'nbaChampion', 'midSeasonCupChampion', 'worstTeam'].includes(category)
+                      ? `/team_images/${item.toLowerCase().replace(/ /g, '-')}.jpg` // Team images
+                      : `/player_images/${item.toLowerCase().replace(/ /g, '-')}.jpg` // Player images
                   }
                   alt={item}
                   className="team-image"
@@ -264,6 +409,10 @@ function MyPicks() {
       </div>
     </div>
   );
+  
+  
+  
+
 
   // Handle saving selections
   const saveSelections = async () => {
@@ -281,6 +430,23 @@ function MyPicks() {
       }
     }
   };
+
+  const renderFinalsSection = (title, winner, loser, winnerCategory, loserCategory) => (
+    <div className="selection-section finals-section">
+      <h3>{title}</h3>
+      <div className="team-selection finals">
+        <div className="finals-team">
+          <span className="finals-label winner-label">Winner</span>
+          {renderSelectionSection('', [winner], winnerCategory)}
+        </div>
+        <div className="vs-label">vs</div>
+        <div className="finals-team">
+          <span className="finals-label loser-label">Loser</span>
+          {renderSelectionSection('', [loser], loserCategory)}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="my-picks-box">
@@ -309,11 +475,55 @@ function MyPicks() {
 
       {user && selections && (
         <div className="make-picks-container">
-          <h2>Your Picks</h2>
+          {user && (
+  <div className="profile-header">
+    {/* If the user has a profile picture, show it */}
+    {profilePicUrl ? (
+      <img
+        src={profilePicUrl}
+        alt="Profile"
+        className="profile-picture-large"
+        onClick={() => document.getElementById('file-input').click()} // Trigger file input on click
+        style={{ cursor: 'pointer' }} // Make it clear it's clickable
+      />
+    ) : (
+      /* If no profile picture, show a large button to upload one */
+      <div className="profile-picture-placeholder">
+        <button
+          className="set-profile-pic-button"
+          onClick={() => document.getElementById('file-input').click()} // Trigger file input on click
+        >
+          Set Profile Picture
+        </button>
+      </div>
+    )}
+
+    {/* Hidden input for file selection */}
+    <input
+      id="file-input"
+      type="file"
+      accept="image/*"
+      style={{ display: 'none' }} // Hide the file input
+      onChange={handleProfilePicChange} // Call function to handle the file change
+    />
+    
+    {/* Profile username header */}
+    <h2 className="profile-username">Your Picks</h2>
+  </div>
+)}
+
+          
           {renderSelectionSection('East Playoff Teams (1-8)', selections.eastPlayoffTeams, 'eastPlayoffTeams', true)}
           {renderSelectionSection('West Playoff Teams (1-8)', selections.westPlayoffTeams, 'westPlayoffTeams', true)}
-          {renderSelectionSection('Eastern Conference Final Winner', [selections.ecfWinner], 'ecfWinner')}
-          {renderSelectionSection('Western Conference Final Winner', [selections.wcfWinner], 'wcfWinner')}
+          {renderFinalsSection('Eastern Conference Final', selections.ecfWinner, selections.ecfLoser, 'ecfWinner', 'ecfLoser')}
+          {renderFinalsSection('Western Conference Final', selections.wcfWinner, selections.wcfLoser, 'wcfWinner', 'wcfLoser')}
+
+          {renderSelectionSection('NBA Champion', [selections.nbaChampion], 'nbaChampion')}
+{renderSelectionSection('Mid-Season Cup Champion', [selections.midSeasonCupChampion], 'midSeasonCupChampion')}
+
+
+
+
           {renderSelectionSection('NBA MVP', [selections.mvp], 'mvp')}
           {renderSelectionSection('Defensive Player of the Year', [selections.dpoy], 'dpoy')}
           {renderSelectionSection('Rookie of the Year', [selections.roty], 'roty')}

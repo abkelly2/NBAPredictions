@@ -1,21 +1,62 @@
 .view-picks-container {
-    padding: 20px;
+  padding: 20px;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.profile-picture-large {
+  width: 300px;
+  height: 300px; /* Makes the picture circular */
+  margin-right: 20px;
+  object-fit: cover;
+}
+
+.profile-username {
+  font-size: 48px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.selection-section {
+  margin-bottom: 20px;
+}
+
+.selection-section h3 {
+  margin-bottom: 10px;
+}
+
+.selection-section ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.selection-section li {
+  margin-bottom: 5px;
+}
+
+@media (max-width: 430px) {
+  .profile-picture-large {
+    width: 100px;  /* Adjust the width to be larger than 30px but still small */
+    height: 100px; /* Maintain circular shape */
+    margin-right: 10px; /* Reduce the margin */
+    object-fit: cover;
   }
-  
-  .selection-section {
-    margin-bottom: 20px;
+
+  .profile-username {
+    font-size: 24px;  /* Reduce font size */
+    font-weight: bold;
+    text-align: center;
   }
-  
-  .selection-section h3 {
-    margin-bottom: 10px;
+
+  .profile-header {
+    display: flex;
+    flex-direction: column; /* Stack the picture and name vertically */
+    align-items: center;
+    margin-bottom: 10px; /* Reduce bottom margin */
   }
-  
-  .selection-section ul {
-    list-style-type: none;
-    padding: 0;
-  }
-  
-  .selection-section li {
-    margin-bottom: 5px;
-  }
-  
+}

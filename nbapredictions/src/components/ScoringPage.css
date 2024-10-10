@@ -1,0 +1,486 @@
+/* Main Page Styling */
+.scoring-page-container {
+    background: linear-gradient(to bottom right, #fdf4e3, #fff9e6);
+    padding: 50px;
+    font-family: 'Poppins', sans-serif;
+    color: #333;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Header Styling */
+.scoring-page-container .scoring-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.scoring-page-container .scoring-title {
+    font-size: 52px;
+    color: #b89b00;
+    text-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.scoring-page-container .scoring-subtitle {
+    font-size: 20px;
+    color: #070707;
+    margin: 0 auto;
+    max-width: 900px;
+    line-height: 1.8;
+}
+
+/* Section Styling */
+.scoring-page-container .scoring-section {
+    margin-bottom: 40px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    transition: all 0.3s ease;
+}
+
+.scoring-page-container .scoring-category h2 {
+    font-size: 28px;
+    color: #161616;
+}
+
+.scoring-page-container .scoring-category p {
+    font-size: 16px;
+    color: #525151;
+}
+
+/* Example Styling */
+.scoring-page-container .playoff-teams-example,
+.scoring-page-container .conference-finals-example,
+.scoring-page-container .ranking-example,
+.scoring-page-container .all-nba-teams-example,
+.scoring-page-container .midseason-cup-example {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.scoring-page-container .team-slot, 
+.scoring-page-container .finals-slot, 
+.scoring-page-container .cup-slot {
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #f8f8f8;
+    flex: 1;
+    margin-right: 10px;
+    text-align: center;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+.scoring-page-container .team-slot:hover, 
+.scoring-page-container .finals-slot:hover, 
+.scoring-page-container .cup-slot:hover {
+    transform: scale(1.05);
+}
+
+.scoring-page-container .correct {
+    background-color: #ccffcc;
+}
+
+.scoring-page-container .correct-spot-wrong-team {
+    background-color: #ffffcc;
+}
+
+.scoring-page-container .missed {
+    background-color: #ffcccc;
+}
+
+.scoring-page-container .winner-slot {
+    background-color: #ffd700;
+}
+
+.scoring-page-container .ranking-slot.first {
+    background-color: #ccffcc;
+}
+
+.scoring-page-container .ranking-slot.second {
+    background-color: #ffffcc;
+}
+
+.scoring-page-container .ranking-slot.third {
+    background-color: #ffcccc;
+}
+
+/* Point Value Styling */
+.scoring-page-container .team-slot span, 
+.scoring-page-container .finals-slot span, 
+.scoring-page-container .ranking-slot span, 
+.scoring-page-container .cup-slot span {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Points Summary */
+.scoring-page-container .points-summary {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.scoring-page-container .points-summary h3 {
+    font-size: 28px;
+    color: #444;
+}
+
+.scoring-page-container .total-points {
+    font-size: 36px;
+    color: #b89b00;
+}
+
+/* Fireworks Effects */
+.scoring-page-container .firework-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.scoring-page-container .firework {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: radial-gradient(circle, #ffcc00, #ff0000);
+    border-radius: 50%;
+    animation: scoring-page-explode 1s ease-out forwards;
+}
+
+@keyframes scoring-page-explode {
+    from {
+        transform: scale(1);
+    }
+    to {
+        transform: scale(20);
+        opacity: 0;
+    }
+}
+
+.scoring-page-container .bonus-slot {
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #f0f0f0;
+    flex: 1;
+    margin-right: 10px;
+    text-align: center;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+    transition: transform 0.2s ease;
+    background-color: #ccffcc; /* Bonus point color */
+}
+
+.scoring-page-container .bonus-slot span {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+.scoring-page-container .bonus-slot:hover {
+    transform: scale(1.05);
+}
+
+.scoring-page-container .ranking-list {
+    display: flex;
+    flex-direction: column;
+    margin-right: 30px;
+}
+
+.scoring-page-container .ranking-list p {
+    font-size: 18px;
+    margin: 5px 0;
+    display: flex;
+    align-items: center;
+}
+
+.scoring-page-container .rank {
+    font-weight: bold;
+    color: #444;
+    margin-right: 10px;
+}
+
+/* Green text for the correct player/team */
+.scoring-page-container .correct {
+    color: #00a000; /* Green for correct */
+    font-weight: bold;
+    position: relative;
+}
+
+.scoring-page-container .correct span {
+    font-size: 16px;
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+/* Flexbox container for the ranking examples */
+.scoring-page-container .ranking-example {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+/* Flex container for the All-NBA Teams Example */
+.scoring-page-container .all-nba-teams-example {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.scoring-page-container .team-slot {
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #f8f8f8;
+    flex: 1;
+    margin-right: 10px;
+    text-align: center;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+    transition: transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.scoring-page-container .team-slot:hover {
+    transform: scale(1.05);
+}
+
+/* Colors for the team slots */
+.scoring-page-container .correct {
+    font-size: 100px;
+    background-color: #ccffcc; /* Green for correct */
+}
+
+.scoring-page-container .correct-spot-wrong-team {
+    background-color: #ffffcc; /* Grey for correct player, wrong team */
+}
+
+.scoring-page-container .missed {
+    background-color: #ffcccc; /* Red for incorrect */
+}
+
+/* Points display within the slot */
+.scoring-page-container .team-slot span {
+    font-size: 16px;
+    font-weight: bold;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    color: #333;
+}
+
+/* Text for players who made the 2nd Team */
+.scoring-page-container small {
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+    display: block;
+}
+
+.scoring-page-container .team-prediction-label {
+    font-size: 20px;
+    color: #444;
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.scoring-page-container .award-example {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.scoring-page-container .award-slot {
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #f8f8f8;
+    flex: 1;
+    margin-right: 10px;
+    text-align: center;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+.scoring-page-container .award-slot.correct {
+    background-color: #ccffcc;
+}
+
+.scoring-page-container .award-slot.missed {
+    background-color: #ffcccc;
+}
+
+.scoring-page-container .award-slot span {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+.scoring-page-container .award-slot:hover {
+    transform: scale(1.05);
+}
+
+.scoring-page-container .champion-example {
+    display: flex;
+    justify-content: center; /* Centers the box */
+    margin-top: 20px;
+}
+
+.scoring-page-container .big-slot {
+    font-size: 40px !important; /* Force the font-size */
+    background-color: #ffd700; /* Gold color for champion */
+    border-radius: 50px;
+    padding: 80px 6%;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    text-align: center;
+    max-width: 400px;
+    display: inline-block;
+    position: relative;
+}
+
+.scoring-page-container .big-slot:hover {
+    transform: scale(1.1);
+}
+
+/* Add trophy emoji before the content */
+.scoring-page-container .big-slot::before {
+    content: "🏆"; /* Trophy emoji */
+    position: absolute;
+    top: -30px;
+    left: -20px;
+    font-size: 70px; /* Adjust the size of the emoji */
+}
+
+.scoring-page-container .big-slot span {
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    font-size: 18px !important;
+    font-weight: bold;
+    color: #333;
+}
+
+
+/* For screens 430px wide or less */
+@media (max-width: 430px) {
+
+    /* Reduce padding in the container to fit smaller screens */
+    .scoring-page-container {
+      padding: 20px;
+    }
+  
+    /* Reduce the font size of the title and subtitles for better readability */
+    .scoring-title {
+      font-size: 32px; /* Make the title smaller */
+    }
+  
+    .scoring-subtitle {
+      font-size: 16px;
+    }
+  
+    /* Reduce the size of the scoring categories and text */
+    .scoring-page-container .scoring-category h2 {
+      font-size: 22px;
+    }
+  
+    .scoring-page-container .scoring-category p {
+      font-size: 14px;
+    }
+  
+    /* Make the team slots smaller and more compact for mobile */
+    .scoring-page-container .playoff-teams-example,
+    .scoring-page-container .conference-finals-example,
+    .scoring-page-container .ranking-example,
+    .scoring-page-container .all-nba-teams-example,
+    .scoring-page-container .midseason-cup-example {
+      flex-wrap: wrap; /* Allow the boxes to wrap on small screens */
+    }
+  
+    /* Reduce the size of the team-slot and finals-slot elements */
+    .scoring-page-container .team-slot, 
+    .scoring-page-container .finals-slot, 
+    .scoring-page-container .cup-slot {
+      width: 90px; /* Make each slot smaller */
+      height: 90px;
+      margin-right: 5px; /* Smaller margin between slots */
+      font-size: 12px; /* Smaller text inside slots */
+      padding: 5px; /* Reduce padding inside slots */
+    }
+  
+    /* Adjust the point values text inside the boxes */
+    .scoring-page-container .team-slot span, 
+    .scoring-page-container .finals-slot span, 
+    .scoring-page-container .ranking-slot span, 
+    .scoring-page-container .cup-slot span {
+      font-size: 10px; /* Smaller font for point values */
+    }
+  
+    /* Adjust finals and champion examples for smaller screens */
+    .scoring-page-container .finals-team {
+      width: 120px; /* Adjust width for smaller screens */
+    }
+  
+    /* Adjust champion section */
+    .scoring-page-container .big-slot {
+      font-size: 28px !important; /* Adjust font size for champion box */
+      padding: 50px 4%;
+    }
+  
+    .scoring-page-container .big-slot::before {
+      font-size: 50px; /* Adjust trophy size */
+      top: -20px;
+      left: -10px;
+    }
+  
+    /* Adjust ranking list for mobile */
+    .scoring-page-container .ranking-list p {
+      font-size: 14px; /* Smaller text for rankings */
+    }
+  
+    /* Reduce the margin between sections for better fit */
+    .scoring-page-container .scoring-section {
+      margin-bottom: 20px;
+    }
+  }
+
+  .scoring-page-container .ranking-example {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: nowrap; /* Prevent wrapping so the lists stay horizontal */
+    overflow-x: auto; /* Enable horizontal scrolling if needed */
+  }
+
+  /* Shrink each ranking list for smaller screens */
+  .scoring-page-container .ranking-list {
+    flex: 0 0 100px; /* Shrink the width of each list */
+    font-size: 12px; /* Reduce the font size */
+    margin-right: 5px; /* Smaller space between lists */
+  }
+
+  /* Adjust the rank font size to fit the screen better */
+  .scoring-page-container .rank {
+    font-size: 10px;
+  }
+
+  /* Adjust the point value font size */
+  .scoring-page-container .ranking-list p span {
+    font-size: 10px;
+  }
+

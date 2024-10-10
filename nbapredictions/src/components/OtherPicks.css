@@ -1,46 +1,112 @@
 /* src/components/OtherPicks.css */
 
 .other-picks-box {
-    padding: 20px;
-    background-color: #f9f9f9;
-    border-radius: 10px;
+  padding: 0px;
+  background-color: #f0f4f8;
+  border-radius: 15px;
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.other-picks-box:hover {
+  background-color: #ffffff;
+  transform: translateY(-5px);
+}
+
+/* Flex column layout for a clean structure */
+.user-picks-list {
+
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* Improved user card style */
+.user-pick-card {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background-color: #ffffff;
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.4s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  font-size: 20px;
+}
+
+.user-pick-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* Profile picture with modern design tweaks */
+.user-pick-card .profile-picture {
+  width: 150px; /* Increased size */
+  height: 150px; /* Make it square */
+  object-fit: cover; /* Ensures image covers the area without distortion */
+  border-radius: 0; /* Square shape */
+  border: 4px solid #e0e0e0; /* Slightly thicker border for emphasis */
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.15);
+  margin-right: 25px;
+}
+
+/* Ensure responsiveness remains intact for smaller screens */
+/* Reduce the size of .user-pick-card and its contents on small screens */
+/* For mobile screens smaller than or equal to 430px */
+@media (max-width: 430px) {
+
+  .other-picks-box h2 {
+    font-size: 9px;
+    padding: 0px;
+    background-color: #f0f4f8;
+    border-radius: 15px;
+    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.15);
+    transition: background-color 0.3s ease, transform 0.3s ease;
   }
-  
-  .user-picks-list {
-    display: flex;
-    flex-direction: column;
-    gap: 20px; /* Add space between each user card */
+
+  /* Reduce the font size for "Other Account Picks" */
+  .other-picks-box h3 {
+    font-size: 10px; /* Adjust font size for smaller screens */
+    margin-bottom: 10px; /* Add some margin for spacing */
+    
   }
-  
+
+ 
+
+  /* Style the user-pick-card for a compact profile picture and name layout */
   .user-pick-card {
     display: flex;
+    flex-direction: column; /* Stack the profile picture and username vertically */
     align-items: center;
-    padding: 10px;
-    border: 1px solid #e0e0e0;
-    border-radius: 5px;
-    background-color: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    justify-content: center;
+    padding: 5px; /* Adjust padding */
+    font-size: 10px; /* Smaller font size for names */
+    gap: 5px; /* Space between picture and name */
+    width: 55px; /* Adjust width to fit the smaller layout */
+    height: auto; /* Make sure it scales vertically */
   }
-  
-  .user-pick-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+
+  /* Shrink the profile picture size further */
+  .user-pick-card .profile-picture {
+    width: 50px; /* Smaller profile picture */
+    height: 50px;
+    margin-right: 0; /* No margin needed */
   }
-  
-  .profile-picture {
-    width: 80px;  /* Make the picture bigger */
-    height: 80px; /* Keep it square */
-    margin-right: 20px; /* Add space between picture and name */
-    object-fit: cover;  /* Ensures the image fits inside the square */
-    border-radius: 10px; /* Make it square with rounded corners */
+
+  /* Center the name underneath the profile picture */
+  .user-pick-card span {
+    text-align: center;
+    margin-top: 5px; /* Add some spacing between the picture and name */
   }
-  
-  .user-pick-card h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-    margin: 0;  /* Ensure there’s no extra margin */
+
+  /* Adjust user picks list to handle narrower layout */
+  .user-picks-list {
+    
+    display: flex;
+    flex-wrap: wrap; /* Allow the items to wrap within the box */
+    justify-content: center; /* Center the items in the box */
+    gap: 15px; /* Add space between items */
   }
-  
+}
