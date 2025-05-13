@@ -1,48 +1,46 @@
-import React, { useState, useEffect, useRef } from 'react';
-import ReactDOM from 'react-dom'; // Import ReactDOM for the portal
+// src/components/MakePicks.js
+
+import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { db } from '../firebase';
-import { collection, getDocs, addDoc, where, query } from 'firebase/firestore'; // Import addDoc for saving selections
+import { collection, getDocs, addDoc, where, query, updateDoc, doc } from 'firebase/firestore';
 import './MakePicks.css';
-import { getAuth } from 'firebase/auth'; // Import Firebase Auth
+import { getAuth } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { Wheel } from 'react-custom-roulette';
 import Confetti from 'react-confetti';
 
-
-
-
-
 function MakePicks() {
-  const [spunPlayer, setSpunPlayer] = useState(null); // Stores the spun player
-  const [hasSpun, setHasSpun] = useState(false); // Tracks if the user has spun the wheel
-  const [wheelData, setWheelData] = useState([]); // Data for the wheel
-  const [mustSpin, setMustSpin] = useState(false); // Determines if the wheel is spinning
-const [prizeNumber, setPrizeNumber] = useState(0); // The index of the chosen player
-const [showConfetti, setShowConfetti] = useState(false); // For the confetti effect
-const [justSpun, setJustSpun] = useState(false);
-const [windowDimensions, setWindowDimensions] = useState({
-  width: window.innerWidth,
-  height: window.innerHeight,
-});
+  const [spunPlayer, setSpunPlayer] = useState(null);
+  const [hasSpun, setHasSpun] = useState(false);
+  const [wheelData, setWheelData] = useState([]);
+  const [mustSpin, setMustSpin] = useState(false);
+  const [prizeNumber, setPrizeNumber] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [windowDimensions, setWindowDimensions] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
 
-
-  const navigate = useNavigate();  // Add this inside the MakePicks component
+  const navigate = useNavigate();
   const auth = getAuth();
-  const currentUser = auth.currentUser; // Access the currently logged-in user
+  const currentUser = auth.currentUser;
   const [teams, setTeams] = useState([]);
   const [players, setPlayers] = useState([]);
-  const [coaches, setCoaches] = useState([]); // New state for coaches
+  const [coaches, setCoaches] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedId, setSelectedId] = useState(''); // Use a single identifier for category and index
+  const [selectedId, setSelectedId] = useState('');
   const [searchBoxPosition, setSearchBoxPosition] = useState({ top: 0, left: 0 });
 
   const [eastPlayoffTeams, setEastPlayoffTeams] = useState(new Array(8).fill(null));
   const [westPlayoffTeams, setWestPlayoffTeams] = useState(new Array(8).fill(null));
-  const [ecfTeams, setEcfTeams] = useState(new Array(2).fill(null)); // Two ECF teams (Winner and Loser)
-  const [wcfTeams, setWcfTeams] = useState(new Array(2).fill(null)); // Two WCF teams (Winner and Loser)
-  const [nbaChampion, setNbaChampion] = useState(null); // New state for NBA Champion
-  const [midSeasonCupChampion, setMidSeasonCupChampion] = useState(null); // New state for Mid-Season Cup Champion
+  const [ecfWinner, setEcfWinner] = useState(null);
+  const [ecfLoser, setEcfLoser] = useState(null);
+  const [wcfWinner, setWcfWinner] = useState(null);
+  const [wcfLoser, setWcfLoser] = useState(null);
+  const [nbaChampion, setNbaChampion] = useState(null);
+  const [midSeasonCupChampion, setMidSeasonCupChampion] = useState(null);
   const [mvp, setMvp] = useState(null);
   const [dpoy, setDpoy] = useState(null);
   const [roty, setRoty] = useState(null);
@@ -54,27 +52,28 @@ const [windowDimensions, setWindowDimensions] = useState({
   const [allNBAThirdTeam, setAllNBAThirdTeam] = useState(new Array(5).fill(null));
   const [allRookieTeam, setAllRookieTeam] = useState(new Array(5).fill(null));
   const [worstTeam, setWorstTeam] = useState(null);
-  const [ecfWinner, setEcfWinner] = useState(null);
-  const [wcfWinner, setWcfWinner] = useState(null);
-  const [ecfLoser, setEcfLoser] = useState(null);
-  const [wcfLoser, setWcfLoser] = useState(null);
 
-  
+  const [picksDocId, setPicksDocId] = useState(null);
+  const [isPicksLoaded, setIsPicksLoaded] = useState(false);
+
+  // New state variables for animation
+  const [showSpunPlayerAnimation, setShowSpunPlayerAnimation] = useState(false);
+  const [isImageZoomedIn, setIsImageZoomedIn] = useState(false);
 
   // Fetch teams, players, and coaches from Firestore
   useEffect(() => {
     const fetchData = async () => {
       const teamsCollection = collection(db, 'nbaTeams');
       const playersCollection = collection(db, 'nbaPlayers');
-      const coachesCollection = collection(db, 'nbaCoaches'); // Assuming coaches are in Firestore under 'nbaCoaches'
+      const coachesCollection = collection(db, 'nbaCoaches');
 
       const teamsSnapshot = await getDocs(teamsCollection);
       const playersSnapshot = await getDocs(playersCollection);
       const coachesSnapshot = await getDocs(coachesCollection);
 
-      const teamsList = teamsSnapshot.docs.map(doc => doc.data().name);
-      const playersList = playersSnapshot.docs.map(doc => doc.data().name);
-      const coachesList = coachesSnapshot.docs.map(doc => {
+      const teamsList = teamsSnapshot.docs.map((doc) => doc.data().name);
+      const playersList = playersSnapshot.docs.map((doc) => doc.data().name);
+      const coachesList = coachesSnapshot.docs.map((doc) => {
         const { name, team } = doc.data();
         return `${name} - ${team}`;
       });
@@ -82,70 +81,101 @@ const [windowDimensions, setWindowDimensions] = useState({
       setTeams(teamsList);
       setPlayers(playersList);
       setCoaches(coachesList);
-      console.log('playersList:', playersList);
 
-      const formattedWheelData = playersList.map(player => ({
-        option: player
+      const formattedWheelData = playersList.map((player) => ({
+        option: player,
       }));
 
       setWheelData(formattedWheelData);
+    };
 
-
-      console.log('Formatted Wheel Data:', formattedWheelData);
-
-      
-
-
-  };
-  const checkUserSpin = async () => {
-    if (currentUser) {
-      const userSpinQuery = query(
-        collection(db, 'userSpins'),
-        where('username', '==', currentUser.email)
-      );
-      const querySnapshot = await getDocs(userSpinQuery);
-      if (!querySnapshot.empty) {
-        setHasSpun(true);
-        const spinData = querySnapshot.docs[0].data();
-        setSpunPlayer(spinData.spunPlayer);
+    const checkUserSpin = async () => {
+      if (currentUser) {
+        const userSpinQuery = query(
+          collection(db, 'userSpins'),
+          where('username', '==', currentUser.email)
+        );
+        const querySnapshot = await getDocs(userSpinQuery);
+        if (!querySnapshot.empty) {
+          setHasSpun(true);
+          const spinData = querySnapshot.docs[0].data();
+          setSpunPlayer(spinData.spunPlayer);
+        }
+      } else {
+        console.error('No user is currently logged in.');
       }
-    } else {
-      console.error("No user is currently logged in.");
-    }
-// Loading is complete
-  };
+    };
 
-  fetchData();
-  checkUserSpin();
-}, [currentUser]);
+    fetchData();
+    checkUserSpin();
 
+    // Update window dimensions on resize
+    const handleResize = () => {
+      setWindowDimensions({ width: window.innerWidth, height: window.innerHeight });
+    };
+    window.addEventListener('resize', handleResize);
 
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [currentUser]);
 
- 
-
+  // Fetch user's existing picks when the component loads
   useEffect(() => {
-    // Log wheelData once the state has updated
-    console.log('Updated Wheel Data after state change:', wheelData);
-    if (wheelData.length > 0) {
-      console.log('Sample Wheel Data Item:', wheelData[0]); // Log the structure of the first element
-  }
-  }, [wheelData]);
+    const fetchUserPicks = async () => {
+      if (currentUser) {
+        const userPicksQuery = query(
+          collection(db, 'userPicks'),
+          where('username', '==', currentUser.email)
+        );
+        const querySnapshot = await getDocs(userPicksQuery);
+        if (!querySnapshot.empty) {
+          const picksData = querySnapshot.docs[0].data();
 
-  useEffect(() => {
-    console.log('playersList:', players);
-    console.log('wheelData:', wheelData);
-  }, [players, wheelData]);
+          // Update component state with picksData
+          setEastPlayoffTeams(picksData.eastPlayoffTeams || new Array(8).fill(null));
+          setWestPlayoffTeams(picksData.westPlayoffTeams || new Array(8).fill(null));
+          setEcfWinner(picksData.ecfWinner || null);
+          setEcfLoser(picksData.ecfLoser || null);
+          setWcfWinner(picksData.wcfWinner || null);
+          setWcfLoser(picksData.wcfLoser || null);
+          setNbaChampion(picksData.nbaChampion || null);
+          setMidSeasonCupChampion(picksData.midSeasonCupChampion || null);
+          setMvp(picksData.mvp || null);
+          setDpoy(picksData.dpoy || null);
+          setRoty(picksData.roty || null);
+          setSixthMan(picksData.sixthMan || null);
+          setMip(picksData.mip || null);
+          setCoachOfTheYear(picksData.coachOfTheYear || null);
+          setAllNBAFirstTeam(picksData.allNBAFirstTeam || new Array(5).fill(null));
+          setAllNBASecondTeam(picksData.allNBASecondTeam || new Array(5).fill(null));
+          setAllNBAThirdTeam(picksData.allNBAThirdTeam || new Array(5).fill(null));
+          setAllRookieTeam(picksData.allRookieTeam || new Array(5).fill(null));
+          setWorstTeam(picksData.worstTeam || null);
+
+          // Store the document ID to update the picks later
+          const docId = querySnapshot.docs[0].id;
+          setPicksDocId(docId);
+        }
+        // Set picks as loaded
+        setIsPicksLoaded(true);
+      }
+    };
+
+    fetchUserPicks();
+  }, [currentUser]);
 
   // Functions to get image filenames
-  const getTeamImageFilename = (name) => `/team_images/${name.toLowerCase().replace(/ /g, '-')}.jpg`;
+  const getTeamImageFilename = (name) =>
+    `/team_images/${name.toLowerCase().replace(/ /g, '-')}.jpg`;
   const getPlayerImageFilename = (name) => {
     const sanitizedName = name
       .toLowerCase()
       .replace(/\./g, '')
-      .replace(/\'/g, '') // Remove all periods and apostrophes
+      .replace(/'/g, '')
       .replace(/,/g, '')
-      .replace(/\s+sr$/i, '') // Remove "sr" if it exists
-      .replace(/\s+jr$/i, ''); // Remove "jr" if it exists at the end
+      .replace(/\s+sr$/i, '')
+      .replace(/\s+jr$/i, '');
     return `/player_images/${sanitizedName.replace(/ /g, '-')}.jpg`;
   };
 
@@ -155,36 +185,18 @@ const [windowDimensions, setWindowDimensions] = useState({
       return;
     }
 
-    
-
-    // Randomly select a prize index (player)
-    console.log("You havent spun");
     const newPrizeNumber = Math.floor(Math.random() * players.length);
     setPrizeNumber(newPrizeNumber);
-    setMustSpin(true); // Start the wheel spin
-    const randomPlayer = players[prizeNumber];
-    
-
-   
-
-
+    setMustSpin(true);
   };
 
   // Handle spin completion
   const handleSpinComplete = () => {
     const randomPlayer = players[prizeNumber];
     setSpunPlayer(randomPlayer);
-    setHasSpun(true); // Prevent further spins
-    setJustSpun(true);
-    setShowConfetti(true);
-    console.log("Confetti triggered:", showConfetti);
-     // Show confetti after spin completes
-  
-    // Auto-hide confetti after 5 seconds
-    setTimeout(() => {
-      setShowConfetti(false);
-    }, 5000);
-  
+    setHasSpun(true);
+    setShowSpunPlayerAnimation(true); // Show the animation overlay
+
     // Save the spun player to Firestore
     try {
       addDoc(collection(db, 'userSpins'), {
@@ -197,14 +209,16 @@ const [windowDimensions, setWindowDimensions] = useState({
     }
   };
 
-  
-
-
-  
+  // Handle confirm button click
+  const handleConfirm = () => {
+    setShowSpunPlayerAnimation(false);
+    setShowConfetti(false);
+    setIsImageZoomedIn(false);
+  };
 
   // Open search box for an existing selection or a new one
   const handleAddClick = (index, category, event) => {
-    event.stopPropagation(); // Prevent the click from affecting other elements
+    event.stopPropagation();
     const rect = event.target.getBoundingClientRect();
     setSearchBoxPosition({ top: rect.top + window.scrollY, left: rect.left + window.scrollX });
     setSelectedId(`${category}-${index}`);
@@ -212,89 +226,202 @@ const [windowDimensions, setWindowDimensions] = useState({
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
-  
+
     // Identify the category that requires team or player selection
-    const list = ['eastPlayoffTeams', 'westPlayoffTeams', 'ecfWinner', 'ecfLoser', 'wcfWinner', 'wcfLoser', 'worstTeam', 'nbaChampion', 'midSeasonCupChampion'].includes(selectedId.split('-')[0])
-      ? teams // Use teams for all these categories
+    const list = ['eastPlayoffTeams', 'westPlayoffTeams', 'ecfWinner', 'ecfLoser', 'wcfWinner', 'wcfLoser', 'worstTeam', 'nbaChampion', 'midSeasonCupChampion'].includes(
+      selectedId.split('-')[0]
+    )
+      ? teams
       : selectedId.split('-')[0] === 'coachOfTheYear'
-        ? coaches // Use coaches list if selecting Coach of the Year
-        : players; // Use players list for everything else
-    
-    // Filter the results based on the query input
-    setSearchResults(list.filter(item => item.toLowerCase().includes(e.target.value.toLowerCase())));
+      ? coaches
+      : players;
+
+    setSearchResults(
+      list.filter((item) => item.toLowerCase().includes(e.target.value.toLowerCase()))
+    );
   };
-  
+
+  // Function to check if any picks have been made
+  const havePicks = () => {
+    return (
+      eastPlayoffTeams.some((team) => team !== null) ||
+      westPlayoffTeams.some((team) => team !== null) ||
+      ecfWinner !== null ||
+      ecfLoser !== null ||
+      wcfWinner !== null ||
+      wcfLoser !== null ||
+      nbaChampion !== null ||
+      midSeasonCupChampion !== null ||
+      mvp !== null ||
+      dpoy !== null ||
+      roty !== null ||
+      sixthMan !== null ||
+      mip !== null ||
+      coachOfTheYear !== null ||
+      allNBAFirstTeam.some((player) => player !== null) ||
+      allNBASecondTeam.some((player) => player !== null) ||
+      allNBAThirdTeam.some((player) => player !== null) ||
+      allRookieTeam.some((player) => player !== null) ||
+      worstTeam !== null
+    );
+  };
+
+  // Function to save picks to Firestore
+  const savePicks = async () => {
+    if (currentUser && isPicksLoaded && havePicks()) {
+      try {
+        if (picksDocId) {
+          const picksRef = doc(db, 'userPicks', picksDocId);
+          await updateDoc(picksRef, {
+            eastPlayoffTeams,
+            westPlayoffTeams,
+            ecfWinner,
+            ecfLoser,
+            wcfWinner,
+            wcfLoser,
+            nbaChampion,
+            midSeasonCupChampion,
+            mvp,
+            dpoy,
+            roty,
+            sixthMan,
+            mip,
+            coachOfTheYear,
+            allNBAFirstTeam,
+            allNBASecondTeam,
+            allNBAThirdTeam,
+            allRookieTeam,
+            worstTeam,
+          });
+        } else {
+          const docRef = await addDoc(collection(db, 'userPicks'), {
+            username: currentUser.email,
+            eastPlayoffTeams,
+            westPlayoffTeams,
+            ecfWinner,
+            ecfLoser,
+            wcfWinner,
+            wcfLoser,
+            nbaChampion,
+            midSeasonCupChampion,
+            mvp,
+            dpoy,
+            roty,
+            sixthMan,
+            mip,
+            coachOfTheYear,
+            allNBAFirstTeam,
+            allNBASecondTeam,
+            allNBAThirdTeam,
+            allRookieTeam,
+            worstTeam,
+          });
+          setPicksDocId(docRef.id);
+        }
+      } catch (error) {
+        console.error('Error saving picks: ', error);
+        alert('An error occurred while saving your selections. Please try again.');
+      }
+    }
+  };
+
+  // Save picks whenever any of the picks state variables change
+  useEffect(() => {
+    if (isPicksLoaded) {
+      savePicks();
+    }
+  }, [
+    eastPlayoffTeams,
+    westPlayoffTeams,
+    ecfWinner,
+    ecfLoser,
+    wcfWinner,
+    wcfLoser,
+    nbaChampion,
+    midSeasonCupChampion,
+    mvp,
+    dpoy,
+    roty,
+    sixthMan,
+    mip,
+    coachOfTheYear,
+    allNBAFirstTeam,
+    allNBASecondTeam,
+    allNBAThirdTeam,
+    allRookieTeam,
+    worstTeam,
+    picksDocId,
+    currentUser,
+    isPicksLoaded,
+  ]);
+
   const handleSelectItem = (item) => {
     const category = selectedId.split('-')[0];
     const index = parseInt(selectedId.split('-')[1], 10);
-  
+
     // Play sound if Memphis Grizzlies are selected
     if (item === 'Memphis Grizzlies') {
-      const audio = new Audio('/grizzlies.mp3'); // Ensure this path is correct based on where your audio is stored
+      const audio = new Audio('/grizzlies.mp3');
       audio.play();
     }
 
-    
     if (item.toLowerCase().includes('lebron')) {
       const lebronAudio = new Audio('/lebron.mp3');
       lebronAudio.play();
-    
+
       // Add the golden tint when the audio starts playing
       document.body.classList.add('golden-tint');
-    
+
       // Stop the audio and remove the golden tint after 7 seconds
       setTimeout(() => {
         lebronAudio.pause();
-        lebronAudio.currentTime = 0; // Reset to start of the audio
-    
-        // Remove the golden tint after the audio has been stopped
+        lebronAudio.currentTime = 0;
         document.body.classList.remove('golden-tint');
-      }, 7000); // 7 seconds
+      }, 7000);
     }
-    
 
     if (item.toLowerCase().includes('tatum')) {
-      const lebronAudio = new Audio('/tatum.mp3');
-      lebronAudio.play();
-  
-      // Stop audio after 6 seconds
+      const tatumAudio = new Audio('/tatum.mp3');
+      tatumAudio.play();
+
+      // Stop audio after 12 seconds
       setTimeout(() => {
-        lebronAudio.pause();
-        lebronAudio.currentTime = 0; // Reset to start of the audio
-      }, 12000); // 6000 milliseconds = 6 seconds
+        tatumAudio.pause();
+        tatumAudio.currentTime = 0;
+      }, 12000);
     }
 
     if (item.toLowerCase().includes('morant')) {
-      const lebronAudio = new Audio('/morant.mp3');
-      lebronAudio.play();
+      const morantAudio = new Audio('/morant.mp3');
+      morantAudio.play();
     }
 
     if (item.toLowerCase().includes('anthony edwards')) {
-      const lebronAudio = new Audio('/ant.mp3');
-      lebronAudio.play();
+      const antAudio = new Audio('/ant.mp3');
+      antAudio.play();
     }
+
     if (item.toLowerCase().includes('anthony davis')) {
-      const lebronAudio = new Audio('/davis.mp3');
-      lebronAudio.play();
+      const davisAudio = new Audio('/davis.mp3');
+      davisAudio.play();
     }
 
     if (item.toLowerCase().includes('curry')) {
-      const lebronAudio = new Audio('/curry.mp3');
-      lebronAudio.play();
+      const curryAudio = new Audio('/curry.mp3');
+      curryAudio.play();
     }
-  
-  
+
     // Update state based on category
     switch (category) {
       case 'eastPlayoffTeams':
-        setEastPlayoffTeams(prev => {
+        setEastPlayoffTeams((prev) => {
           const updated = [...prev];
           updated[index] = item;
           return updated;
         });
         break;
       case 'westPlayoffTeams':
-        setWestPlayoffTeams(prev => {
+        setWestPlayoffTeams((prev) => {
           const updated = [...prev];
           updated[index] = item;
           return updated;
@@ -337,28 +464,28 @@ const [windowDimensions, setWindowDimensions] = useState({
         setCoachOfTheYear(item);
         break;
       case 'allNBAFirstTeam':
-        setAllNBAFirstTeam(prev => {
+        setAllNBAFirstTeam((prev) => {
           const updated = [...prev];
           updated[index] = item;
           return updated;
         });
         break;
       case 'allNBASecondTeam':
-        setAllNBASecondTeam(prev => {
+        setAllNBASecondTeam((prev) => {
           const updated = [...prev];
           updated[index] = item;
           return updated;
         });
         break;
       case 'allNBAThirdTeam':
-        setAllNBAThirdTeam(prev => {
+        setAllNBAThirdTeam((prev) => {
           const updated = [...prev];
           updated[index] = item;
           return updated;
         });
         break;
       case 'allRookieTeam':
-        setAllRookieTeam(prev => {
+        setAllRookieTeam((prev) => {
           const updated = [...prev];
           updated[index] = item;
           return updated;
@@ -370,47 +497,42 @@ const [windowDimensions, setWindowDimensions] = useState({
       default:
         break;
     }
-  
+
     // Reset search
     setSearchQuery('');
     setSelectedId('');
   };
-
-
-  const handleConfirm = () => {
-    setShowConfetti(false); // Hide the confetti
-    setSpunPlayer(null); // Remove the player's image from the screen
-  };
-
 
   const renderSearchBox = (index, category) => {
     return ReactDOM.createPortal(
       <div
         className="search-box"
         style={{ top: searchBoxPosition.top + 40, left: searchBoxPosition.left }}
-        onClick={(e) => e.stopPropagation()} // Prevent click inside the search box from moving it
+        onClick={(e) => e.stopPropagation()}
       >
         <input
           type="text"
           placeholder="Search..."
           value={searchQuery}
           onChange={handleSearchChange}
-          onClick={(e) => e.stopPropagation()} // Prevent click from closing the search box
+          onClick={(e) => e.stopPropagation()}
         />
         <div className="search-results">
           {searchResults.map((result, idx) => {
             const formattedResult = result
               .toLowerCase()
-              .replace(/\s+/g, '-') // Replace spaces with hyphens
-              .replace(/-{2,}/g, '-') // Replace multiple hyphens with a single hyphen
-              .replace(/-$/, ''); // Remove trailing hyphen if present
-  
-            const imageSrc = ['eastPlayoffTeams', 'westPlayoffTeams', 'ecfWinner', 'ecfLoser', 'wcfWinner', 'wcfLoser', 'worstTeam', 'nbaChampion', 'midSeasonCupChampion'].includes(category)
-              ? getTeamImageFilename(result) // Show team images for team categories
+              .replace(/\s+/g, '-')
+              .replace(/-{2,}/g, '-')
+              .replace(/-$/, '');
+
+            const imageSrc = ['eastPlayoffTeams', 'westPlayoffTeams', 'ecfWinner', 'ecfLoser', 'wcfWinner', 'wcfLoser', 'worstTeam', 'nbaChampion', 'midSeasonCupChampion'].includes(
+              category
+            )
+              ? getTeamImageFilename(result)
               : category === 'coachOfTheYear'
-              ? `/coach_images/${formattedResult}.jpg` // Show coach images for coach category
-              : getPlayerImageFilename(result); // Show player images for player categories
-  
+              ? `/coach_images/${formattedResult}.jpg`
+              : getPlayerImageFilename(result);
+
             return (
               <div key={idx} className="search-result-item" onClick={() => handleSelectItem(result)}>
                 <img src={imageSrc} alt={result} className="search-team-image" />
@@ -420,33 +542,36 @@ const [windowDimensions, setWindowDimensions] = useState({
           })}
         </div>
       </div>,
-      document.body // Portal renders to the root body
+      document.body
     );
   };
-  
-
 
   const renderSelectionSection = (title, items, category, showRankings = false) => (
     <div className="selection-section">
       <h3>{title}</h3>
       <div className="team-selection">
         {items.map((item, index) => (
-          <div key={index} className="team-slot" onClick={(event) => handleAddClick(index, category, event)}>
-            {/* Show ranking number if rankings are enabled */}
-            {showRankings && (
-              <div className="ranking-number">
-                {index + 1}
-              </div>
-            )}
+          <div
+            key={index}
+            className="team-slot"
+            onClick={(event) => handleAddClick(index, category, event)}
+          >
+            {showRankings && <div className="ranking-number">{index + 1}</div>}
             {item ? (
               <div className="team-info">
                 <img
                   src={
-                    ['eastPlayoffTeams', 'westPlayoffTeams', 'ecfWinner', 'ecfLoser', 'wcfWinner', 'wcfLoser', 'worstTeam', 'nbaChampion', 'midSeasonCupChampion'].includes(category)
-                      ? getTeamImageFilename(item) // Use team images for team categories
+                    ['eastPlayoffTeams', 'westPlayoffTeams', 'ecfWinner', 'ecfLoser', 'wcfWinner', 'wcfLoser', 'worstTeam', 'nbaChampion', 'midSeasonCupChampion'].includes(
+                      category
+                    )
+                      ? getTeamImageFilename(item)
                       : category === 'coachOfTheYear'
-                      ? `/coach_images/${item.toLowerCase().replace(/ - /g, '-').replace(/ /g, '-').replace(/-+$/, '')}.jpg` // Replace spaces with hyphens and trim extra hyphens
-                      : getPlayerImageFilename(item) // Use player images for player categories
+                      ? `/coach_images/${item
+                          .toLowerCase()
+                          .replace(/ - /g, '-')
+                          .replace(/ /g, '-')
+                          .replace(/-+$/, '')}.jpg`
+                      : getPlayerImageFilename(item)
                   }
                   alt={item}
                   className="team-image"
@@ -462,36 +587,33 @@ const [windowDimensions, setWindowDimensions] = useState({
       </div>
     </div>
   );
-  
-  
-
-
 
   const renderFinalsSection = (title, winner, loser, winnerCategory, loserCategory) => (
     <div className="selection-section finals-section">
       <h3>{title}</h3>
       <div className="team-selection finals">
         <div className="finals-team">
-          <span className="finals-label winner-label">Winner</span> {/* Style properly */}
+          <span className="finals-label winner-label">Winner</span>
           {renderSelectionSection('', [winner], winnerCategory)}
         </div>
         <div className="vs-label">vs</div>
         <div className="finals-team">
-          <span className="finals-label loser-label">Loser</span> {/* Style properly */}
+          <span className="finals-label loser-label">Loser</span>
           {renderSelectionSection('', [loser], loserCategory)}
         </div>
       </div>
     </div>
   );
-  
-  
+
   // Check if all selections are made
   const areAllSelectionsMade = () => {
     return (
       !eastPlayoffTeams.includes(null) &&
       !westPlayoffTeams.includes(null) &&
-      ecfWinner && ecfLoser &&
-      wcfLoser && wcfWinner &&
+      ecfWinner &&
+      ecfLoser &&
+      wcfLoser &&
+      wcfWinner &&
       nbaChampion &&
       midSeasonCupChampion &&
       mvp &&
@@ -522,11 +644,11 @@ const [windowDimensions, setWindowDimensions] = useState({
         eastPlayoffTeams,
         westPlayoffTeams,
         ecfWinner,
-        ecfLoser, // Store the ECF Loser
+        ecfLoser,
         wcfWinner,
         wcfLoser,
-        nbaChampion,  // Include NBA Champion
-        midSeasonCupChampion, // Store the WCF Loser
+        nbaChampion,
+        midSeasonCupChampion,
         mvp,
         dpoy,
         roty,
@@ -538,11 +660,10 @@ const [windowDimensions, setWindowDimensions] = useState({
         allNBAThirdTeam,
         allRookieTeam,
         worstTeam,
-    });
-    
+      });
 
       alert('Your selections have been locked successfully!');
-      navigate('/');  // This will take you back to the home page
+      navigate('/');
     } catch (error) {
       console.error('Error saving selections: ', error);
       alert('An error occurred while saving your selections. Please try again.');
@@ -561,8 +682,6 @@ const [windowDimensions, setWindowDimensions] = useState({
       {renderFinalsSection('Eastern Conference Final', ecfWinner, ecfLoser, 'ecfWinner', 'ecfLoser')}
       {renderFinalsSection('Western Conference Final', wcfWinner, wcfLoser, 'wcfWinner', 'wcfLoser')}
 
-
-
       {/* NBA Champion and Mid-Season Cup Champion */}
       {renderSelectionSection('NBA Champion', [nbaChampion], 'nbaChampion')}
       {renderSelectionSection('Mid-Season Cup Champion', [midSeasonCupChampion], 'midSeasonCupChampion')}
@@ -580,26 +699,22 @@ const [windowDimensions, setWindowDimensions] = useState({
       {renderSelectionSection('All-Rookie Team', allRookieTeam, 'allRookieTeam')}
       {renderSelectionSection('Worst NBA Team', [worstTeam], 'worstTeam')}
 
-
-
-      
-
       <div className="spin-the-wheel-container">
         {spunPlayer ? (
           <div className="selection-section">
             {/* If the player has already spun, show the spun player in a box */}
             <h3>Your Spun Player</h3>
             <div className="team-selection">
-            <div className="team-slot"style={{ width: '100%' }}>
-              <div className="team-info">
-              <img
-                src={`/player_images/${spunPlayer.toLowerCase().replace(/ /g, '-')}.jpg`}
-                alt={spunPlayer}
-                className="player-image"
-              />
-              <span>{spunPlayer}</span>
-            </div>
-            </div>
+              <div className="team-slot" style={{ width: '100%' }}>
+                <div className="team-info">
+                  <img
+                    src={getPlayerImageFilename(spunPlayer)}
+                    alt={spunPlayer}
+                    className="player-image"
+                  />
+                  <span>{spunPlayer}</span>
+                </div>
+              </div>
             </div>
           </div>
         ) : (
@@ -628,36 +743,35 @@ const [windowDimensions, setWindowDimensions] = useState({
         )}
       </div>
 
-      {/* Confetti effect */}
-      {showConfetti && (
-        <div
-          style={{
-            position: 'absolute',
-            top: window.scrollY,
-            left: 0,
-            width: windowDimensions.width,
-            height: windowDimensions.height,
-            zIndex: 9999,
-          }}
-        >
-          <Confetti
-            width={windowDimensions.width}
-            height={windowDimensions.height}
-            numberOfPieces={500}
-            recycle={false}
-          />
+      {/* Animation Overlay */}
+      {showSpunPlayerAnimation && (
+        <div className="player-animation-overlay">
+          <div className="player-image-container">
+            <h2 className="spun-player-name">{spunPlayer}</h2>
+            <img
+              src={getPlayerImageFilename(spunPlayer)}
+              alt={spunPlayer}
+              className={`animated-player-image ${isImageZoomedIn ? 'hover' : ''}`}
+              onAnimationEnd={() => {
+                setIsImageZoomedIn(true);
+                setShowConfetti(true);
+              }}
+            />
+            <button className="confirm-button" onClick={handleConfirm}>
+              Confirm
+            </button>
+          </div>
+          {/* Confetti effect */}
+          {showConfetti && (
+            <Confetti
+              width={windowDimensions.width}
+              height={windowDimensions.height}
+              numberOfPieces={500}
+              recycle={false}
+            />
+          )}
         </div>
       )}
-
-      
-      
-      
-
-
-            
- 
-
-
 
       {/* Lock Selections Button */}
       <button className="lock-selections-button" onClick={handleLockSelections}>

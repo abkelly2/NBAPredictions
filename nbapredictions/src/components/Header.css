@@ -2,26 +2,23 @@
 .header-container {
   background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #202a43 100%);
   padding: 20px 0px;
-
   box-shadow: 0px 12px 30px rgba(0, 0, 0, 0.25);
-  position: sticky;
+  position: relative;
   top: 0;
   z-index: 1000;
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center; /* Center the content */
-  overflow: hidden; /* Prevent balls from going outside the header */
+  overflow: hidden;
 }
 
 /* Flexbox for header content */
 .header-content {
-  position: relative; /* Enable absolute positioning for the buttons */
+  position: relative;
   width: 100%;
+  height: 150px; /* Adjust as needed */
   display: flex;
   align-items: center;
-  justify-content: center; /* Center the title */
-  text-align: center; /* Center the text */
+  justify-content: center;
+  text-align: center;
 }
 
 /* Title styling */
@@ -33,8 +30,35 @@
   color: #ffffff;
   letter-spacing: 1.2px;
   text-shadow: 4px 4px 14px rgba(0, 0, 0, 0.5);
+  position: relative; /* To position placeholders */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2; /* Adjusted for better spacing */
 }
 
+.header-title span,
+.header-title h1 {
+  display: inline-block;
+}
+
+/* Basketball Placeholder */
+.basketball-placeholder {
+  display: inline-block;
+  width: 50px; /* Adjust to match basketball size */
+  height: 50px;
+  vertical-align: middle;
+}
+
+/* Hoop Placeholder */
+.hoop-placeholder {
+  display: inline-block;
+  width: 50px; /* Adjust to match hoop size */
+  height: 50px;
+  vertical-align: middle;
+}
+
+/* Subtitle styling */
 .header-subtitle {
   font-family: 'Open Sans', sans-serif;
   font-size: 18px;
@@ -58,7 +82,8 @@
   transition: all 0.3s ease;
   box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.3);
   position: absolute;
-  left: 5px; /* Always keep 30px from the left */
+  left: 5px;
+  top: 15px;
 }
 
 .go-home-button:hover {
@@ -80,12 +105,12 @@
 /* Right-aligned button section */
 .header-right {
   position: absolute;
-  right: 10px; /* Always keep 30px from the right */
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  gap: 10px; /* Adds space between stacked buttons */
+  gap: 10px;
 }
 
 /* Stacked buttons container */
@@ -97,7 +122,9 @@
 }
 
 /* Common button style for stacked buttons */
-.nav-button, .legacy-button, .logout-button {
+.nav-button,
+.legacy-button,
+.logout-button {
   padding: 11.5px 66px;
   border-radius: 8px;
   font-size: 16px;
@@ -112,7 +139,9 @@
 }
 
 /* Button hover effects */
-.nav-button:hover, .legacy-button:hover, .logout-button:hover {
+.nav-button:hover,
+.legacy-button:hover,
+.logout-button:hover {
   transform: translateY(-3px);
   box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.25);
 }
@@ -147,69 +176,192 @@
   background-color: #c82333;
 }
 
+/* Basketball */
+.basketball {
+  position: absolute;
+  cursor: pointer;
+  font-size: 50px;
+  user-select: none;
+  z-index: 10;
+}
+
+/* Basketball Hoop */
+.hoop {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+}
+
+/* Hoop Image */
+.hoop-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: translate(5px, -50px);
+}
+
+/* Block styles */
+.block {
+  position: absolute;
+  width: 10px; /* Adjust width as needed */
+  height: 50px; /* Adjust height as needed */
+  background-color: brown; /* Color of the blocks */
+}
+
+.left-block {
+  left: 50px; /* Adjust to position the block relative to the hoop */
+  top: 70px; /* Adjust as needed */
+}
+
+.right-block {
+  right: 50px; /* Adjust to position the block relative to the hoop */
+  top: 70px; /* Adjust as needed */
+}
+
+/* Static basketballs for mobile */
+.static-basketball {
+  display: inline-block;
+  font-size: 30px;
+  margin: 0 10px; /* Adjust spacing as needed */
+}
+
 /* MEDIA QUERIES */
-@media only screen and (max-width: 430px) {
+
+/* For devices with width up to 768px */
+@media only screen and (max-width: 768px) {
   /* Adjust header padding and spacing */
   .header-container {
-    padding: 35px 20px;
+    padding: 15px 10px;
+  }
+
+  /* Reduce header height */
+  .header-content {
+    height: auto;
+    flex-direction: column;
+    padding: 10px 0;
   }
 
   /* Reduce title font size */
   .header-title {
-    position: center;
-    font-size: 15px; /* Reduce the title size for smaller screens */
+    font-size: 28px;
+    flex-wrap: wrap;
+    line-height: 1.2;
+  }
+
+  /* Adjust static basketball size */
+  .static-basketball {
+    font-size: 24px;
+    margin: 0 5px;
   }
 
   /* Reduce subtitle font size */
   .header-subtitle {
-    font-size: 10px; /* Make the subtitle smaller */
+    font-size: 14px;
+    margin-top: 5px;
   }
 
-  /* Reduce Home button size */
+  /* Adjust Home button size */
   .go-home-button {
-    width: 80px;
-    height: 80px;
-    left: -10px; /* Adjust position */
+    width: 60px;
+    height: 60px;
+    left: 10px;
+    top: 10px;
   }
 
   .go-home-button .home-icon {
-    font-size: 30px; /* Reduce icon size */
+    font-size: 24px;
   }
 
-  /* Stacked buttons smaller for mobile */
+  /* Adjust header-right position */
   .header-right {
-    right: -10px; /* Keep buttons closer to the edge */
-  }
-
-  .nav-button, .legacy-button, .logout-button {
-    padding: 8px 15px; /* Adjust padding */
-    font-size: 10px; /* Reduce font size */
-    margin: 0; /* Ensure there's no external margin */
-    line-height: 1; /* Adjust line height to make buttons more compact */
-  }
-
-  /* Ensure there’s no space between the stacked buttons */
-  .stacked-buttons {
-    display: flex;
+    right: 10px;
+    top: 10px;
+    transform: none;
+    /* Changed flex-direction to column for vertical stacking */
     flex-direction: column;
-    gap: 0px; /* Set gap to 0 */
-    margin: 0; /* Remove any margin */
-    padding: 0; /* Remove any padding */
+    gap: 5px;
   }
 
-  .stacked-buttons > * {
-    margin: 0; /* Ensure there's no margin on individual buttons */
-    padding: 0; /* Remove padding from button containers */
+  /* Adjust buttons for mobile */
+  .nav-button,
+  .legacy-button,
+  .logout-button {
+    padding: 8px 12px;
+    font-size: 12px;
+    height: auto;
+    width: auto;
+    box-shadow: none;
   }
 
-  .nav-button + .legacy-button, 
-  .legacy-button + .logout-button {
-    margin-top: 0; /* Eliminate vertical margin */
+  /* Adjust stacked-buttons for mobile */
+  .stacked-buttons {
+    /* Changed flex-direction to column for vertical stacking */
+    flex-direction: column;
+    height: auto;
+    gap: 5px;
   }
 
-  /* Set an explicit height and width for the buttons to compress them */
-  .nav-button, .legacy-button, .logout-button {
-    height: 35px; /* Control the height to make them smaller */
-    width: 100px; /* Control the width for consistency */
+  /* Hide interactive elements on mobile */
+  .basketball,
+  .hoop,
+  .basketball-placeholder,
+  .hoop-placeholder {
+    display: none;
+  }
+}
+
+/* For devices with width up to 430px */
+@media only screen and (max-width: 430px) {
+  /* Further reduce header padding */
+  .header-container {
+    padding: 10px 5px;
+  }
+
+  /* Reduce title font size */
+  .header-title {
+    font-size: 20px;
+  }
+
+  /* Adjust static basketball size */
+  .static-basketball {
+    font-size: 20px;
+    margin: 0 3px;
+  }
+
+  /* Reduce subtitle font size */
+  .header-subtitle {
+    font-size: 12px;
+  }
+
+  /* Adjust Home button size */
+  .go-home-button {
+    width: 50px;
+    height: 50px;
+    left: 5px;
+    top: 5px;
+  }
+
+  .go-home-button .home-icon {
+    font-size: 20px;
+  }
+
+  /* Adjust header-right for smaller screens */
+  .header-right {
+    right: 5px;
+    top: 5px;
+    gap: 3px;
+  }
+
+  /* Adjust buttons for smaller mobile screens */
+  .nav-button,
+  .legacy-button,
+  .logout-button {
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  /* Adjust stacked-buttons for smaller screens */
+  .stacked-buttons {
+    gap: 3px;
   }
 }

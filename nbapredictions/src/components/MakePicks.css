@@ -12,7 +12,6 @@
 
 .make-picks-container:hover {
   background-color: #f0f4fa;
-
 }
 
 h2 {
@@ -133,7 +132,7 @@ h2 {
   position: absolute;
   top: -50px;
   left: 0;
-  width: 320px; 
+  width: 320px;
   padding: 20px;
   background: #ffffff;
   border-radius: 12px;
@@ -146,12 +145,12 @@ h2 {
 /* Smooth fade-in for the search box */
 @keyframes fadeIn {
   from {
-      opacity: 0;
-      transform: translateY(20px);
+    opacity: 0;
+    transform: translateY(20px);
   }
   to {
-      opacity: 1;
-      transform: translateY(0);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -232,17 +231,17 @@ button:hover {
 /* Media query for responsiveness */
 @media (max-width: 768px) {
   .team-selection {
-      flex-direction: column;
-      align-items: center;
+    flex-direction: column;
+    align-items: center;
   }
 
   .team-slot {
-      width: 100%;
-      max-width: 320px;
+    width: 100%;
+    max-width: 320px;
   }
 
   .selection-section {
-      padding: 20px;
+    padding: 20px;
   }
 }
 
@@ -268,7 +267,7 @@ button:hover {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 200px; /* Adjust the width for each team slot */
+  width: 200px;
 }
 
 /* Label for Winner and Loser */
@@ -276,7 +275,7 @@ button:hover {
   font-size: 18px;
   font-weight: bold;
   color: #007bff;
-  margin-bottom: 10px; /* Space between label and the team selection */
+  margin-bottom: 10px;
 }
 
 /* "vs" label in the center */
@@ -284,40 +283,11 @@ button:hover {
   font-size: 30px;
   font-weight: bold;
   color: #333;
-  margin: 0 20px; /* Space between the teams */
+  margin: 0 20px;
   text-align: center;
 }
 
-.spin-wheel-button {
-  background-color: #ffcc00;
-  border: none;
-  border-radius: 10px;
-  color: white;
-  padding: 12px 24px;
-  font-size: 18px;
-  cursor: pointer;
-  margin-top: 20px;
-  transition: background-color 0.3s ease;
-}
-
-.spin-wheel-button:hover {
-  background-color: #ff9900;
-}
-
-.wheel-spin-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.spun-player {
-  font-size: 20px;
-  font-weight: bold;
-  margin-top: 20px;
-  color: #333;
-}
-
-/* Styling for the Spin the Wheel button */
+/* Spin the Wheel button */
 .spin-the-wheel-button {
   font-size: 20px;
   padding: 15px 30px;
@@ -327,6 +297,7 @@ button:hover {
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s ease;
+  margin-top: 20px;
 }
 
 .spin-the-wheel-button:hover {
@@ -334,7 +305,7 @@ button:hover {
   transform: scale(1.1);
 }
 
-/* Styling for the Wheel */
+/* Wheel container */
 .spin-the-wheel-container {
   display: flex;
   flex-direction: column;
@@ -343,54 +314,56 @@ button:hover {
   margin-top: 50px;
 }
 
-.spin-the-wheel {
-  border: 5px solid #007bff;
-  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
-  border-radius: 50%;
+/* Animation Overlay */
+.player-animation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
 }
 
-/* Player Image Animation */
 .player-image-container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  animation: zoomIn 1s ease forwards, floatUpDown 3s ease-in-out infinite;
-  z-index: 9999;
 }
 
-/* Zoom In animation */
+.animated-player-image {
+  width: 300px;
+  height: auto;
+  animation: zoomIn 1s forwards;
+}
+
 @keyframes zoomIn {
-  from {
-    transform: translate(-50%, -50%) scale(0);
-  }
-  to {
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-
-/* Floating effect */
-@keyframes floatUpDown {
   0% {
-    transform: translate(-50%, -55%);
-  }
-  50% {
-    transform: translate(-50%, -45%);
+    transform: scale(0);
   }
   100% {
-    transform: translate(-50%, -55%);
+    transform: scale(1);
   }
 }
 
-/* Confetti Background */
-.confetti-background {
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  z-index: 9999;
+/* Hover up and down after animation */
+.animated-player-image.hover {
+  animation: floatUpDown 2s infinite;
+}
+
+@keyframes floatUpDown {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
 
 .confirm-button {
@@ -402,27 +375,31 @@ button:hover {
   border-radius: 10px;
   cursor: pointer;
   margin-top: 20px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
-
+.confirm-button:hover {
+  background-color: #218838;
+  transform: translateY(-3px);
+}
 
 /* Media query for smaller screens */
 @media (max-width: 768px) {
   .finals {
     flex-direction: column;
   }
-  
+
   .vs-label {
-    margin: 20px 0; /* Adjust the spacing for mobile */
+    margin: 20px 0;
   }
 }
+
 .golden-tint {
-  background-color: rgba(255, 215, 0, 0.2); /* Light golden tint */
+  background-color: rgba(255, 215, 0, 0.2);
   transition: background-color 0.5s ease-in-out;
 }
 
 @media (max-width: 430px) {
-
   /* Reduce the padding inside the main container */
   .make-picks-container {
     padding: 20px;
@@ -441,12 +418,12 @@ button:hover {
 
   /* Adjust the team selection layout to fit better on smaller screens */
   .team-selection {
-    gap: 10px; /* Reduce gap between team slots */
+    gap: 10px;
   }
 
   .team-slot {
-    width: 100px; /* Make the team selection slots smaller */
-    height: 140px; /* Adjust the height accordingly */
+    width: 100px;
+    height: 140px;
   }
 
   /* Adjust the image size and text inside the team-info */
@@ -457,7 +434,7 @@ button:hover {
   }
 
   .team-info span {
-    font-size: 14px; /* Smaller text for team names */
+    font-size: 14px;
   }
 
   /* Adjust ranking number size */
@@ -469,11 +446,11 @@ button:hover {
 
   /* Finals section adjustments */
   .finals-section {
-    margin-bottom: 30px; /* Reduce margin to save space */
+    margin-bottom: 30px;
   }
 
   .finals-team {
-    width: 150px; /* Adjust the width of each team slot */
+    width: 150px;
   }
 
   .finals-label {

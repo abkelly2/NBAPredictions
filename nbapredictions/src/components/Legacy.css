@@ -228,18 +228,19 @@
   @media (max-width: 430px) {
 
     .legacy-container {
-      max-width: 60%;
+      max-width: 70%;
        /* Reduce the width */
-      padding: 0px 10px; /* Reduce padding */
+      padding: 0px 9px;
+       /* Reduce padding */
       border-width: 2px; /* Thinner border */
       font-size: 10px;
     }
     .legacy-title{
-      font-size: 15px;
+      font-size: 20px;
     }
 
     .legacy-subtitle{
-      font-size: 5px;
+      font-size: 10px;
     }
 
 
@@ -249,7 +250,7 @@
     }
   
     .winner-name {
-      font-size: 32px;
+      font-size: 40px;
     }
   
     .winner-year {
@@ -262,7 +263,7 @@
     }
   
     .pick-item {
-      font-size: 14px;
+      font-size: 16px;
     }
   }
   
