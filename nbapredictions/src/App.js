@@ -10,6 +10,7 @@ import MakePicks from './components/MakePicks'; // Import MakePicks component
 import './components/Layout.css';
 import Legacy from './components/Legacy';
 import ScoringPage from './components/ScoringPage';  // Import the new Legacy page
+import LeaderboardPage from './components/LeaderboardPage';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
           <Route path="/picks/:userId" element={<ViewPicks />} />
           <Route path="/legacy" element={<Legacy />} />
           <Route path="/scoring" element={<ScoringPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
 
         
           {/* Main content */}

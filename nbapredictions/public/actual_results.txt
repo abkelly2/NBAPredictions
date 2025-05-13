@@ -1,0 +1,98 @@
+# Champion
+
+# East Playoff Teams
+Cleveland Cavaliers
+Boston Celtics
+New York Knicks
+Indiana Pacers
+Milwaukee Bucks
+Detroit Pistons
+Orlando Magic
+Miami Heat
+
+# West Playoff Teams
+Oklahoma City Thunder
+Houston Rockets
+Los Angeles Lakers
+Denver Nuggets
+Los Angeles Clippers
+Minnesota Timberwolves
+Golden State Warriors
+Memphis Grizzlies
+
+# East Finals
+
+# West Finals
+
+
+# MVP
+
+
+# DPOY
+Evan Mobley
+Dyson Daniels
+Draymond Green
+Luguentz Detroit
+Amen Thompson
+
+
+# ROY
+Stephon Castle
+Zaccharie Risacher
+Jaylen Wells
+Alex Sarr
+Zach Edey
+
+# MIP
+Dyson Daniels
+Ivica Zubac
+Cade Cunningham
+Christian Braun
+Austin Reaves
+
+# SMOY
+Payton Pritchard
+Malik Beasley
+Ty Jerome
+De'Andre Hunter
+Naz Reid
+
+# COTY
+Kenny Atkinson
+J.B. Bickerstaff
+Ime Udoka
+Mark Daigneault
+Tyronn Lue
+
+# All-NBA First Team
+
+
+# All-NBA Second Team
+
+
+# All-NBA Third Team
+
+
+# Worst Team
+Utah Jazz
+Washington Wizards
+Charlotte Hornets
+New Orleans Pelicans
+Philadelphia 76ers
+
+# Mid-Season Cup Champion
+Milwaukee Bucks
+Oklahoma City Thunder
+
+# Player PPG
+Enrique Freeman: 2.1
+De'Anthony Melton: 10.3
+Micah Potter: 4.3
+Matisse Thybulle: 7.5
+Mikal Bridges: 17.6
+Brodric Thomas: 3.3
+Jaren Jackson, Jr.: 22.2
+Seth Curry: 6.5
+Miles McBride: 9.5
+
+

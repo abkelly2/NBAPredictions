@@ -27,6 +27,7 @@ import ReactDOM from 'react-dom';
 import { getAuth } from 'firebase/auth';
 import { Wheel } from 'react-custom-roulette';
 import Confetti from 'react-confetti';
+import { calculateUserScore, parseActualResults, SCORING_WEIGHTS } from '../scoring';
 
 function MyPicks() {
   const [signUpUsername, setSignUpUsername] = useState('');
@@ -62,6 +63,9 @@ function MyPicks() {
   // New state variables for animation
   const [showSpunPlayerAnimation, setShowSpunPlayerAnimation] = useState(false);
   const [isImageZoomedIn, setIsImageZoomedIn] = useState(false);
+
+  const [actualResults, setActualResults] = useState(null);
+  const [selectionStatus, setSelectionStatus] = useState({});
 
   const usernameToEmail = (username) => `${username}@example.com`;
   const getPlayerImageFilename = (name) => {
@@ -304,6 +308,25 @@ function MyPicks() {
     fetchData();
   }, [currentUser]);
 
+  // Add this new useEffect to fetch actual results
+  useEffect(() => {
+    async function fetchActualResults() {
+      try {
+        const response = await fetch('/actual_results.txt');
+        if (!response.ok) {
+          throw new Error('Failed to fetch actual results');
+        }
+        const actualResultsText = await response.text();
+        const results = parseActualResults(actualResultsText);
+        setActualResults(results);
+      } catch (err) {
+        console.error('Error fetching actual results:', err);
+      }
+    }
+
+    fetchActualResults();
+  }, []);
+
   const handleSpinWheel = () => {
     if (hasSpun) {
       alert('You have already spun the wheel!');
@@ -492,6 +515,146 @@ function MyPicks() {
     );
   };
 
+  // Add this function to determine selection status
+  const getSelectionStatus = (category, value, index) => {
+    if (!actualResults || !selections) return '';
+
+    // Map component categories to actual results categories
+    const categoryMapping = {
+      'sixthMan': 'smoy',
+      'coachOfTheYear': 'coty',
+      'roty': 'roy'
+    };
+
+    // Get the actual category name from the mapping, or use the original if no mapping exists
+    const actualCategory = categoryMapping[category] || category;
+
+    // Check if the category has actual results
+    const hasActualResults = (category) => {
+      const actualCategory = categoryMapping[category] || category;
+      return actualResults[actualCategory] && 
+             ((Array.isArray(actualResults[actualCategory]) && actualResults[actualCategory].length > 0) ||
+              (!Array.isArray(actualResults[actualCategory]) && actualResults[actualCategory] !== ''));
+    };
+
+    // If no actual results for this category, return empty string (no color)
+    if (!hasActualResults(category)) return '';
+
+    switch (category) {
+      case 'eastPlayoffTeams':
+      case 'westPlayoffTeams': {
+        const actualTeams = category === 'eastPlayoffTeams' ? actualResults.eastPlayoffTeams : actualResults.westPlayoffTeams;
+        if (value === actualTeams[index]) return 'correct';
+        if (actualTeams.includes(value)) return 'partial';
+        return 'incorrect';
+      }
+      case 'ecfWinner':
+      case 'wcfWinner':
+      case 'nbaChampion': {
+        const actualValue = actualResults[actualCategory];
+        if (value === actualValue) return 'correct';
+        return 'incorrect';
+      }
+      case 'midSeasonCupChampion': {
+        const actualValue = actualResults[actualCategory];
+        if (Array.isArray(actualValue) && actualValue.length >= 2) {
+          if (value === actualValue[0]) return 'correct';
+          if (value === actualValue[1]) return 'partial';
+          return 'incorrect';
+        }
+        return '';
+      }
+      case 'mvp':
+      case 'dpoy':
+      case 'roy':
+      case 'mip':
+      case 'smoy':
+      case 'coty':
+      case 'sixthMan':
+      case 'coachOfTheYear':
+      case 'roty':
+      case 'worstTeam': {
+        const actualValue = actualResults[actualCategory];
+        if (Array.isArray(actualValue)) {
+          if (actualValue[0] === value) return 'correct';
+          if (actualValue.includes(value)) return 'partial';
+          return 'incorrect';
+        }
+        return '';
+      }
+      default:
+        return '';
+    }
+  };
+
+  // Add this function to calculate points for a single selection
+  const calculateSelectionPoints = (category, value, index) => {
+    if (!actualResults || !selections) return 0;
+
+    // Map component categories to actual results categories
+    const categoryMapping = {
+      'sixthMan': 'smoy',
+      'coachOfTheYear': 'coty',
+      'roty': 'roy'
+    };
+
+    const actualCategory = categoryMapping[category] || category;
+    const actualValue = actualResults[actualCategory];
+
+    if (!actualValue) return 0;
+
+    switch (category) {
+      case 'eastPlayoffTeams':
+      case 'westPlayoffTeams': {
+        const actualTeams = category === 'eastPlayoffTeams' ? actualResults.eastPlayoffTeams : actualResults.westPlayoffTeams;
+        if (value === actualTeams[index]) return SCORING_WEIGHTS.eastPlayoffTeam; // Correct team in correct position
+        if (actualTeams.includes(value)) return SCORING_WEIGHTS.playoffTeamWrongPosition; // Team made playoffs but wrong position
+        return 0;
+      }
+      case 'midSeasonCupChampion': {
+        if (Array.isArray(actualValue) && actualValue.length >= 2) {
+          if (value === actualValue[0]) return SCORING_WEIGHTS.midSeasonCupChampion; // Champion
+          if (value === actualValue[1]) return SCORING_WEIGHTS.midSeasonCupRunnerUp; // Runner-up
+          return 0;
+        }
+        return 0;
+      }
+      case 'mvp':
+      case 'dpoy':
+      case 'roy':
+      case 'mip':
+      case 'smoy':
+      case 'coty':
+      case 'sixthMan':
+      case 'coachOfTheYear':
+      case 'roty': {
+        if (Array.isArray(actualValue)) {
+          const position = actualValue.indexOf(value);
+          if (position === 0) return SCORING_WEIGHTS.mvp; // Winner
+          if (position === 1) return SCORING_WEIGHTS.mvpSecond; // 2nd place
+          if (position === 2) return SCORING_WEIGHTS.mvpThird;  // 3rd place
+          if (position === 3) return SCORING_WEIGHTS.mvpFourth;  // 4th place
+          if (position === 4) return SCORING_WEIGHTS.mvpFifth;  // 5th place
+        }
+        return 0;
+      }
+      case 'worstTeam': {
+        if (Array.isArray(actualValue)) {
+          const position = actualValue.indexOf(value);
+          if (position === 0) return SCORING_WEIGHTS.worstTeam; // Worst team
+          if (position === 1) return SCORING_WEIGHTS.worstTeamSecond; // 2nd worst
+          if (position === 2) return SCORING_WEIGHTS.worstTeamThird; // 3rd worst
+          if (position === 3) return SCORING_WEIGHTS.worstTeamFourth; // 4th worst
+          if (position === 4) return SCORING_WEIGHTS.worstTeamFifth; // 5th worst
+        }
+        return 0;
+      }
+      default:
+        return 0;
+    }
+  };
+
+  // Modify the renderSelectionSection function
   const renderSelectionSection = (title, items, category, showRankings = false) => (
     <div className="selection-section">
       <h3>{title}</h3>
@@ -499,7 +662,7 @@ function MyPicks() {
         {items.map((item, index) => (
           <div
             key={index}
-            className="team-slot"
+            className={`team-slot ${getSelectionStatus(category, item, index)}`}
             onClick={(event) => handleAddClick(index, category, event)}
           >
             {showRankings && <div className="ranking-number">{index + 1}</div>}
@@ -519,6 +682,9 @@ function MyPicks() {
                   className="team-image"
                 />
                 <span>{item}</span>
+                <div className="points-display">
+                  {calculateSelectionPoints(category, item, index) > 0 ? `+${calculateSelectionPoints(category, item, index)}` : ''}
+                </div>
               </div>
             ) : (
               <button onClick={(event) => handleAddClick(index, category, event)}>+</button>
@@ -572,238 +738,213 @@ function MyPicks() {
     }
   }, [selections, isPicksLoaded]);
 
-  return (
-    <div className="my-picks-box">
-      {!user && (
-        <div className="auth-forms">
-          <div className="auth-section">
-            <h3>Sign Up</h3>
-            <form onSubmit={handleSignUp} className="auth-form">
-              <input
-                type="text"
-                placeholder="Username"
-                value={signUpUsername}
-                onChange={(e) => setSignUpUsername(e.target.value)}
-                required
+  const renderSpunPlayerSection = () => (
+    spunPlayer && (
+      <div className="selection-section">
+        <h3>Spun Player</h3>
+        <div className="team-selection">
+          <div className="team-slot">
+            <div className="team-info">
+              <img
+                src={getPlayerImageFilename(spunPlayer)}
+                alt={spunPlayer}
+                className="team-image"
               />
-              <input
-                type="password"
-                placeholder="Password"
-                value={signUpPassword}
-                onChange={(e) => setSignUpPassword(e.target.value)}
-                required
-              />
-              <button type="submit" className="auth-button">
-                Sign Up
-              </button>
-            </form>
-          </div>
-
-          <div className="auth-section">
-            <h3>Login</h3>
-            <form onSubmit={handleLogin} className="auth-form">
-              <input
-                type="text"
-                placeholder="Username"
-                value={loginUsername}
-                onChange={(e) => setLoginUsername(e.target.value)}
-                required
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                required
-              />
-              <button type="submit" className="auth-button">
-                Login
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {user && selections && (
-        <div className="make-picks-container">
-          {user && (
-            <div className="profile-header">
-              {/* Profile Picture */}
-              {profilePicUrl ? (
-                <img
-                  src={profilePicUrl}
-                  alt="Profile"
-                  className="profile-picture-large"
-                  onClick={() => document.getElementById('file-input').click()}
-                  style={{ cursor: 'pointer' }}
-                />
-              ) : (
-                <div className="profile-picture-placeholder">
-                  <button
-                    className="set-profile-pic-button"
-                    onClick={() => document.getElementById('file-input').click()}
-                  >
-                    Set Profile Picture
-                  </button>
+              <span>{spunPlayer}</span>
+              {actualResults && actualResults.playerPPG && actualResults.playerPPG[spunPlayer] && (
+                <div className="points-display">
+                  +{actualResults.playerPPG[spunPlayer]}
                 </div>
               )}
-
-              {/* Hidden input for file selection */}
-              <input
-                id="file-input"
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={handleProfilePicChange}
-              />
-
-              {/* Profile username header */}
-              <h2 className="profile-username">Your Picks</h2>
             </div>
-          )}
+          </div>
+        </div>
+      </div>
+    )
+  );
 
-          {renderSelectionSection(
-            'East Playoff Teams (1-8)',
-            selections.eastPlayoffTeams,
-            'eastPlayoffTeams',
-            true
-          )}
-          {renderSelectionSection(
-            'West Playoff Teams (1-8)',
-            selections.westPlayoffTeams,
-            'westPlayoffTeams',
-            true
-          )}
-          {renderFinalsSection(
-            'Eastern Conference Final',
-            selections.ecfWinner,
-            selections.ecfLoser,
-            'ecfWinner',
-            'ecfLoser'
-          )}
-          {renderFinalsSection(
-            'Western Conference Final',
-            selections.wcfWinner,
-            selections.wcfLoser,
-            'wcfWinner',
-            'wcfLoser'
-          )}
+  return (
+    <>
+      {/* Leaderboard Button - Moved outside my-picks-box */}
+      <div className="leaderboard-button-container">
+        <Link to="/leaderboard" className="leaderboard-button">
+          View Leaderboard
+        </Link>
+      </div>
 
-          {renderSelectionSection('NBA Champion', [selections.nbaChampion], 'nbaChampion')}
-          {renderSelectionSection(
-            'Mid-Season Cup Champion',
-            [selections.midSeasonCupChampion],
-            'midSeasonCupChampion'
-          )}
+      <div className="my-picks-box">
+        {!user && (
+          <div className="auth-forms">
+            <div className="auth-section">
+              <h3>Sign Up</h3>
+              <form onSubmit={handleSignUp} className="auth-form">
+                <input
+                  type="text"
+                  placeholder="Username"
+                  value={signUpUsername}
+                  onChange={(e) => setSignUpUsername(e.target.value)}
+                  required
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={signUpPassword}
+                  onChange={(e) => setSignUpPassword(e.target.value)}
+                  required
+                />
+                <button type="submit" className="auth-button">
+                  Sign Up
+                </button>
+              </form>
+            </div>
 
-          {renderSelectionSection('NBA MVP', [selections.mvp], 'mvp')}
-          {renderSelectionSection('Defensive Player of the Year', [selections.dpoy], 'dpoy')}
-          {renderSelectionSection('Rookie of the Year', [selections.roty], 'roty')}
-          {renderSelectionSection('Sixth Man of the Year', [selections.sixthMan], 'sixthMan')}
-          {renderSelectionSection('Most Improved Player', [selections.mip], 'mip')}
-          {renderSelectionSection(
-            'Coach of the Year',
-            [selections.coachOfTheYear],
-            'coachOfTheYear'
-          )}
-          {renderSelectionSection('All-NBA First Team', selections.allNBAFirstTeam, 'allNBAFirstTeam')}
-          {renderSelectionSection(
-            'All-NBA Second Team',
-            selections.allNBASecondTeam,
-            'allNBASecondTeam'
-          )}
-          {renderSelectionSection(
-            'All-NBA Third Team',
-            selections.allNBAThirdTeam,
-            'allNBAThirdTeam'
-          )}
-          {renderSelectionSection('All-Rookie Team', selections.allRookieTeam, 'allRookieTeam')}
-          {renderSelectionSection('Worst NBA Team', [selections.worstTeam], 'worstTeam')}
+            <div className="auth-section">
+              <h3>Login</h3>
+              <form onSubmit={handleLogin} className="auth-form">
+                <input
+                  type="text"
+                  placeholder="Username"
+                  value={loginUsername}
+                  onChange={(e) => setLoginUsername(e.target.value)}
+                  required
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  required
+                />
+                <button type="submit" className="auth-button">
+                  Login
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
 
-          <div className="spin-the-wheel-container">
-            {spunPlayer ? (
-              <div className="selection-section">
-                <h3>Your Spun Player</h3>
-                <div className="team-selection">
-                  <div className="team-slot" style={{ width: '100%' }}>
-                    <div className="team-info">
-                      <img
-                        src={getPlayerImageFilename(spunPlayer)}
-                        alt={spunPlayer}
-                        className="player-image"
-                      />
-                      <span>{spunPlayer}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div style={{ position: 'relative' }}>
-                {wheelData && wheelData.length > 0 ? (
-                  <>
-                    <Wheel
-                      mustStartSpinning={mustSpin}
-                      prizeNumber={prizeNumber}
-                      data={wheelData}
-                      onStopSpinning={() => {
-                        setMustSpin(false);
-                        handleSpinComplete();
-                      }}
-                    />
-                    {!hasSpun && (
-                      <button className="spin-the-wheel-button" onClick={handleSpinWheel}>
-                        Spin the Wheel!
-                      </button>
-                    )}
-                  </>
+        {user && selections && (
+          <div className="make-picks-container">
+            {user && (
+              <div className="profile-header">
+                {/* Profile Picture */}
+                {profilePicUrl ? (
+                  <img
+                    src={profilePicUrl}
+                    alt="Profile"
+                    className="profile-picture-large"
+                    onClick={() => document.getElementById('file-input').click()}
+                    style={{ cursor: 'pointer' }}
+                  />
                 ) : (
-                  <p>Loading wheel data...</p>
+                  <div className="profile-picture-placeholder">
+                    <button
+                      className="set-profile-pic-button"
+                      onClick={() => document.getElementById('file-input').click()}
+                    >
+                      Set Profile Picture
+                    </button>
+                  </div>
                 )}
+
+                {/* Hidden input for file selection */}
+                <input
+                  id="file-input"
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleProfilePicChange}
+                />
+
+                {/* Profile username header */}
+                <h2 className="profile-username">Your Picks</h2>
               </div>
             )}
-          </div>
 
-          {/* Animation Overlay */}
-          {showSpunPlayerAnimation && (
-            <div className="player-animation-overlay">
-              <div className="player-image-container">
-                <h2 className="spun-player-name">{spunPlayer}</h2>
-                <img
-                  src={getPlayerImageFilename(spunPlayer)}
-                  alt={spunPlayer}
-                  className={`animated-player-image ${isImageZoomedIn ? 'hover' : ''}`}
-                  onAnimationEnd={() => {
-                    setIsImageZoomedIn(true);
-                    setShowConfetti(true);
-                  }}
-                />
-                <button className="confirm-button" onClick={handleConfirm}>
-                  Confirm
-                </button>
-              </div>
-              {/* Confetti effect */}
-              {showConfetti && (
-                <Confetti
-                  width={windowDimensions.width}
-                  height={windowDimensions.height}
-                  numberOfPieces={500}
-                  recycle={false}
-                />
-              )}
+            {/* Total Points Display */}
+            <div className="total-points">
+              <span className="points-label">Total Points:</span>
+              <span className="points-value">
+                {calculateUserScore({
+                  ...selections,
+                  spunPlayer: spunPlayer
+                }, actualResults)}
+              </span>
             </div>
-          )}
-        </div>
-      )}
 
-      {!selections && user && (
-        <div>
-          <p>No selections found. Make your picks!</p>
-          <Link to="/make-picks">
-            <button className="make-picks-button">Go to Make Picks</button>
-          </Link>
-        </div>
-      )}
-    </div>
+            {/* Rest of the picks sections */}
+            {renderSelectionSection(
+              'East Playoff Teams (1-8)',
+              selections.eastPlayoffTeams,
+              'eastPlayoffTeams',
+              true
+            )}
+            {renderSelectionSection(
+              'West Playoff Teams (1-8)',
+              selections.westPlayoffTeams,
+              'westPlayoffTeams',
+              true
+            )}
+            {renderFinalsSection(
+              'Eastern Conference Final',
+              selections.ecfWinner,
+              selections.ecfLoser,
+              'ecfWinner',
+              'ecfLoser'
+            )}
+            {renderFinalsSection(
+              'Western Conference Final',
+              selections.wcfWinner,
+              selections.wcfLoser,
+              'wcfWinner',
+              'wcfLoser'
+            )}
+
+            {renderSelectionSection('NBA Champion', [selections.nbaChampion], 'nbaChampion')}
+            {renderSelectionSection(
+              'Mid-Season Cup Champion',
+              [selections.midSeasonCupChampion],
+              'midSeasonCupChampion'
+            )}
+
+            {renderSelectionSection('NBA MVP', [selections.mvp], 'mvp')}
+            {renderSelectionSection('Defensive Player of the Year', [selections.dpoy], 'dpoy')}
+            {renderSelectionSection('Rookie of the Year', [selections.roty], 'roty')}
+            {renderSelectionSection('Sixth Man of the Year', [selections.sixthMan], 'sixthMan')}
+            {renderSelectionSection('Most Improved Player', [selections.mip], 'mip')}
+            {renderSelectionSection(
+              'Coach of the Year',
+              [selections.coachOfTheYear],
+              'coachOfTheYear'
+            )}
+            {renderSelectionSection('All-NBA First Team', selections.allNBAFirstTeam, 'allNBAFirstTeam')}
+            {renderSelectionSection(
+              'All-NBA Second Team',
+              selections.allNBASecondTeam,
+              'allNBASecondTeam'
+            )}
+            {renderSelectionSection(
+              'All-NBA Third Team',
+              selections.allNBAThirdTeam,
+              'allNBAThirdTeam'
+            )}
+            {renderSelectionSection('All-Rookie Team', selections.allRookieTeam, 'allRookieTeam')}
+            {renderSelectionSection('Worst NBA Team', [selections.worstTeam], 'worstTeam')}
+
+            {renderSpunPlayerSection()}
+          </div>
+        )}
+
+        {!selections && user && (
+          <div>
+            <p>No selections found. Make your picks!</p>
+            <Link to="/make-picks">
+              <button className="make-picks-button">Go to Make Picks</button>
+            </Link>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 

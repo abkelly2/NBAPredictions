@@ -84,11 +84,13 @@ h2 {
 }
 
 .team-info {
+  position: relative;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-  padding: 15px;
+  justify-content: center;
 }
 
 .team-info img {
@@ -125,6 +127,17 @@ h2 {
   justify-content: center;
   font-size: 14px;
   font-weight: bold;
+}
+
+.points-display {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #5bc820;
+  font-size: 1.4em;
+  font-weight: 800;
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+  transform: scale(1.1);
 }
 
 /* Search box styling */
@@ -462,4 +475,113 @@ button:hover {
     font-size: 24px;
     margin: 10px 0;
   }
+}
+
+.leaderboard-button-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0 40px 0;
+}
+
+.leaderboard-button {
+  display: inline-block;
+  padding: 15px 30px;
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1.1em;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.leaderboard-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+}
+
+/* Selection status styles */
+.team-slot.correct {
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.2) 100%);
+  border-color: #28a745;
+  box-shadow: 0 0 10px rgba(40, 167, 69, 0.2);
+}
+
+.team-slot.partial {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.2) 100%);
+  border-color: #ffc107;
+  box-shadow: 0 0 10px rgba(255, 193, 7, 0.2);
+}
+
+.team-slot.incorrect {
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.2) 100%);
+  border-color: #dc3545;
+  box-shadow: 0 0 10px rgba(220, 53, 69, 0.2);
+}
+
+/* Add hover effects for status colors */
+.team-slot.correct:hover {
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.2) 0%, rgba(40, 167, 69, 0.3) 100%);
+}
+
+.team-slot.partial:hover {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.2) 0%, rgba(255, 193, 7, 0.3) 100%);
+}
+
+.team-slot.incorrect:hover {
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.2) 0%, rgba(220, 53, 69, 0.3) 100%);
+}
+
+.total-points {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin: -10px 0 30px 0;
+  font-family: 'Arial', sans-serif;
+}
+
+.points-label {
+  font-size: 1.2em;
+  font-weight: 500;
+  color: #1a1a1a;
+  text-transform: none;
+  letter-spacing: 0.5px;
+}
+
+.points-value {
+  font-size: 2.4em;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1;
+  position: relative;
+}
+
+.points-value::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #ffd700, #b8860b);
+  opacity: 0.7;
+}
+
+/* Add a subtle animation for the points value */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.points-value {
+  animation: fadeIn 0.4s ease-out;
 }
