@@ -723,6 +723,12 @@ function MyPicks() {
           <Login />
         )}
 
+        {user && !selections && (
+          <div className="make-picks-container">
+            <h2>Come back after the season ends to try and predict next year!</h2>
+          </div>
+        )}
+
         {user && selections && (
           <div className="make-picks-container">
             {user && (
