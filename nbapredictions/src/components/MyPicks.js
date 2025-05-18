@@ -28,12 +28,9 @@ import { getAuth } from 'firebase/auth';
 import { Wheel } from 'react-custom-roulette';
 import Confetti from 'react-confetti';
 import { calculateUserScore, parseActualResults, SCORING_WEIGHTS } from '../scoring';
+import Login from './Login';
 
 function MyPicks() {
-  const [signUpUsername, setSignUpUsername] = useState('');
-  const [signUpPassword, setSignUpPassword] = useState('');
-  const [loginUsername, setLoginUsername] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
   const [profilePic, setProfilePic] = useState(null);
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
@@ -136,57 +133,6 @@ function MyPicks() {
       } catch (error) {
         console.error('Error uploading profile picture after sign up:', error);
       }
-    }
-  };
-
-  // Handle sign-up
-  const handleSignUp = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    if (signUpPassword.length < 6) {
-      setError('Password should be at least 6 characters long.');
-      return;
-    }
-
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        usernameToEmail(signUpUsername),
-        signUpPassword
-      );
-      const user = userCredential.user;
-
-      await setDoc(doc(db, 'userProfiles', user.uid), {
-        username: `${signUpUsername.toLowerCase()}@example.com`,
-        profilePicUrl: '',
-      });
-
-      await uploadProfilePicAfterSignUp(user);
-
-      setUser(user);
-      alert('Account created successfully!');
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  // Handle login
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    try {
-      await setPersistence(auth, browserSessionPersistence);
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        usernameToEmail(loginUsername),
-        loginPassword
-      );
-      setUser(userCredential.user);
-      alert('Logged in successfully!');
-    } catch (err) {
-      setError(err.message);
     }
   };
 
@@ -774,53 +720,7 @@ function MyPicks() {
 
       <div className="my-picks-box">
         {!user && (
-          <div className="auth-forms">
-            <div className="auth-section">
-              <h3>Sign Up</h3>
-              <form onSubmit={handleSignUp} className="auth-form">
-                <input
-                  type="text"
-                  placeholder="Username"
-                  value={signUpUsername}
-                  onChange={(e) => setSignUpUsername(e.target.value)}
-                  required
-                />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={signUpPassword}
-                  onChange={(e) => setSignUpPassword(e.target.value)}
-                  required
-                />
-                <button type="submit" className="auth-button">
-                  Sign Up
-                </button>
-              </form>
-            </div>
-
-            <div className="auth-section">
-              <h3>Login</h3>
-              <form onSubmit={handleLogin} className="auth-form">
-                <input
-                  type="text"
-                  placeholder="Username"
-                  value={loginUsername}
-                  onChange={(e) => setLoginUsername(e.target.value)}
-                  required
-                />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  required
-                />
-                <button type="submit" className="auth-button">
-                  Login
-                </button>
-              </form>
-            </div>
-          </div>
+          <Login />
         )}
 
         {user && selections && (

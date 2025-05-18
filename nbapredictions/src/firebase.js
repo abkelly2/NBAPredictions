@@ -1,7 +1,15 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getAuth } from "firebase/auth"; // Import Firebase Auth
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  TwitterAuthProvider,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from 'firebase/storage';
 
@@ -26,3 +34,14 @@ export const storage = getStorage(app);
 // Initialize Firebase Authentication and export it
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Initialize auth providers
+const googleProvider = new GoogleAuthProvider();
+const twitterProvider = new TwitterAuthProvider();
+
+// Authentication functions
+export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
+export const signInWithTwitter = () => signInWithPopup(auth, twitterProvider);
+export const signInWithEmail = (email, password) => signInWithEmailAndPassword(auth, email, password);
+export const signUpWithEmail = (email, password) => createUserWithEmailAndPassword(auth, email, password);
+export const resetPassword = (email) => sendPasswordResetEmail(auth, email);

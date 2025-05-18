@@ -1,47 +1,232 @@
 // src/components/Login.js
 import React, { useState } from 'react';
-import { auth } from '../firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithGoogle, signInWithTwitter, signInWithEmail, signUpWithEmail, resetPassword } from '../firebase';
+import './Login.css';
+import { useNavigate } from 'react-router-dom';
 
-function Login() {
+const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showEmailSection, setShowEmailSection] = useState(false);
+  const [resetPasswordMessage, setResetPasswordMessage] = useState('');
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError('');
+  const usernameToEmail = (username) => `${username}@example.com`;
+
+  const handlePostLoginNavigation = () => {
+    const postLoginActionString = sessionStorage.getItem('postLoginAction');
+    if (postLoginActionString) {
+      try {
+        const action = JSON.parse(postLoginActionString);
+        if (action.path && action.data) {
+          console.log('[Login] Handling post-login action:', action);
+          setTimeout(() => {
+            console.log('[Login] Executing delayed navigation to:', action.path);
+            navigate(action.path, { 
+              state: { pendingListData: action.data }, 
+              replace: true 
+            });
+          }, 500);
+          return true;
+        }
+      } catch (error) {
+        console.error('Error processing post-login action:', error);
+        sessionStorage.removeItem('postLoginAction');
+      }
+    }
+    return false;
+  };
+
+  const handleGoogleSignIn = async () => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert('Logged in successfully!');
-    } catch (err) {
-      setError(err.message);
+      await signInWithGoogle();
+      if (handlePostLoginNavigation()) return;
+    } catch (error) {
+      console.error('Google login failed:', error);
     }
   };
 
+  const handleTwitterSignIn = async () => {
+    try {
+      await signInWithTwitter();
+      if (handlePostLoginNavigation()) return;
+    } catch (error) {
+      console.error('Twitter login failed:', error);
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        alert('An account already exists with this email using a different sign-in method. Please sign in with Google or the method you used previously.');
+      } else {
+        alert('Twitter sign-in failed. Please try again or use a different method.');
+      }
+    }
+  };
+
+  const handleEmailAuth = async (e) => {
+    e.preventDefault();
+    setErrorMessage('');
+
+    if (isSignUp) {
+      if (password !== confirmPassword) {
+        setErrorMessage('Passwords do not match.');
+        return;
+      }
+      try {
+        await signUpWithEmail(usernameToEmail(email), password);
+        if (handlePostLoginNavigation()) return;
+      } catch (error) {
+        if (error.code === 'auth/email-already-in-use') {
+          setErrorMessage('Username already in use. Please sign in instead.');
+        } else if (error.code === 'auth/weak-password') {
+          setErrorMessage('Password is too weak. Please use a stronger password.');
+        } else {
+          setErrorMessage('Sign-up failed. Please try again.');
+        }
+      }
+    } else {
+      try {
+        await signInWithEmail(usernameToEmail(email), password);
+        if (handlePostLoginNavigation()) return;
+      } catch (error) {
+        if (error.code === 'auth/wrong-password') {
+          setErrorMessage('Incorrect password. Please try again.');
+        } else if (error.code === 'auth/user-not-found') {
+          setErrorMessage('No account found with this username. Please sign up.');
+        } else {
+          setErrorMessage('Sign-in failed. Please try again.');
+        }
+      }
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!email) {
+      setResetPasswordMessage('Please enter your username to reset your password.');
+      return;
+    }
+    setIsResettingPassword(true);
+    try {
+      await resetPassword(usernameToEmail(email));
+      setResetPasswordMessage('Password reset email sent. Check your inbox for instructions.');
+    } catch (error) {
+      console.error('Password reset failed:', error);
+      setResetPasswordMessage('Failed to send password reset email. Please try again.');
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
+  const toggleSignUp = (mode) => {
+    setIsSignUp(mode === 'signup');
+    setErrorMessage('');
+  };
+
+  const toggleEmailSection = () => {
+    setShowEmailSection(!showEmailSection);
+  };
+
   return (
-    <div className="auth-container">
-      <h2>Login</h2>
-      {error && <p className="error-message">{error}</p>}
-      <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit">Login</button>
-      </form>
+    <div className="login-container">
+      <div className="login-box">
+        <h2>Sign In Required</h2>
+        <p>To make NBA predictions and view leaderboards, please sign in.</p>
+        <p>Once logged in, you'll be able to make your picks!</p>
+        <button 
+          className="google-sign-in-button" 
+          onClick={handleGoogleSignIn}
+        >
+          <img 
+            src="/images/google.png"
+            alt="Google logo" 
+          />
+          Sign in with Google
+        </button>
+        <button
+          className="twitter-sign-in-button"
+          onClick={handleTwitterSignIn}
+        >
+          <img
+            src="/images/twitter.png"
+            alt="Twitter logo"
+          />
+          Sign in with Twitter
+        </button>
+        <button
+          className="email-toggle-button"
+          onClick={toggleEmailSection}
+        >
+          <img
+            src="/images/email.png"
+            alt="Email logo"
+          />
+          Sign in with Username
+        </button>
+        {showEmailSection && (
+          <div className="email-sign-in-section">
+            <div className="auth-mode-toggle">
+              <span
+                className={`auth-mode ${!isSignUp ? 'active' : ''}`}
+                onClick={() => toggleSignUp('signin')}
+              >
+                Sign In
+              </span>
+              <span
+                className={`auth-mode ${isSignUp ? 'active' : ''}`}
+                onClick={() => toggleSignUp('signup')}
+              >
+                Sign Up
+              </span>
+            </div>
+            {errorMessage && <p className="error-message">{errorMessage}</p>}
+            {resetPasswordMessage && <p className="reset-password-message">{resetPasswordMessage}</p>}
+            <form onSubmit={handleEmailAuth}>
+              <input
+                type="text"
+                placeholder="Username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="email-input"
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="password-input"
+              />
+              {isSignUp && (
+                <input
+                  type="password"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="password-input"
+                />
+              )}
+              <button type="submit" className="email-sign-in-button">
+                {isSignUp ? 'Sign Up' : 'Sign In'}
+              </button>
+              {!isSignUp && (
+                <button 
+                  type="button" 
+                  className="reset-password-button"
+                  onClick={handleResetPassword}
+                  disabled={isResettingPassword}
+                >
+                  {isResettingPassword ? 'Sending...' : 'Forgot Password?'}
+                </button>
+              )}
+            </form>
+          </div>
+        )}
+      </div>
     </div>
   );
-}
+};
 
 export default Login;
