@@ -130,11 +130,19 @@ function ViewPicks() {
   const getSelectionStatus = (category, value, index) => {
     if (!actualResults || !userPicks) return '';
 
+    console.log('getSelectionStatus called with:', { category, value, index });
+    console.log('Actual results:', actualResults);
+    console.log('User picks:', userPicks);
+
     // Map component categories to actual results categories
     const categoryMapping = {
       'sixthMan': 'smoy',
       'coachOfTheYear': 'coty',
-      'roty': 'roy'
+      'roty': 'roy',
+      'ecfWinner': 'eastFinals',
+      'ecfLoser': 'eastFinals',
+      'wcfWinner': 'westFinals',
+      'wcfLoser': 'westFinals'
     };
 
     // Get the actual category name from the mapping, or use the original if no mapping exists
@@ -143,13 +151,50 @@ function ViewPicks() {
     // Check if the category has actual results
     const hasActualResults = (category) => {
       const actualCategory = categoryMapping[category] || category;
+      console.log('Checking actual results for category:', category, 'mapped to:', actualCategory);
+      console.log('Actual results for category:', actualResults[actualCategory]);
+      
       return actualResults[actualCategory] && 
              ((Array.isArray(actualResults[actualCategory]) && actualResults[actualCategory].length > 0) ||
               (!Array.isArray(actualResults[actualCategory]) && actualResults[actualCategory] !== ''));
     };
 
     // If no actual results for this category, return empty string (no color)
-    if (!hasActualResults(category)) return '';
+    if (!hasActualResults(category)) {
+      console.log('No actual results for category:', category);
+      return '';
+    }
+
+    // Handle conference finals cases first
+    if (category === 'ecfWinner' || category === 'ecfLoser') {
+      console.log('Checking ECF:', { value, eastFinals: actualResults.eastFinals });
+      // Normalize the team names by trimming whitespace
+      const normalizedValue = value.trim();
+      const normalizedFinals = actualResults.eastFinals.map(team => team.trim());
+      
+      // Check if the team made it to the finals, regardless of winner/loser label
+      if (normalizedFinals.includes(normalizedValue)) {
+        console.log('ECF correct match found');
+        return 'correct';
+      }
+      console.log('ECF incorrect match');
+      return 'incorrect';
+    }
+
+    if (category === 'wcfWinner' || category === 'wcfLoser') {
+      console.log('Checking WCF:', { value, westFinals: actualResults.westFinals });
+      // Normalize the team names by trimming whitespace
+      const normalizedValue = value.trim();
+      const normalizedFinals = actualResults.westFinals.map(team => team.trim());
+      
+      // Check if the team made it to the finals, regardless of winner/loser label
+      if (normalizedFinals.includes(normalizedValue)) {
+        console.log('WCF correct match found');
+        return 'correct';
+      }
+      console.log('WCF incorrect match');
+      return 'incorrect';
+    }
 
     switch (category) {
       case 'eastPlayoffTeams':
@@ -159,31 +204,17 @@ function ViewPicks() {
         if (actualTeams.includes(value)) return 'partial';
         return 'incorrect';
       }
-      case 'ecfWinner':
-      case 'wcfWinner':
       case 'nbaChampion': {
         const actualValue = actualResults[actualCategory];
         if (value === actualValue) return 'correct';
         return 'incorrect';
       }
       case 'midSeasonCupChampion': {
-        console.log('Checking mid-season cup champion status:');
-        console.log('User pick:', value);
-        console.log('Actual results:', actualResults.midSeasonCupChampion);
-        
         if (Array.isArray(actualResults.midSeasonCupChampion) && actualResults.midSeasonCupChampion.length >= 2) {
-          if (value === actualResults.midSeasonCupChampion[0]) {
-            console.log('Returning correct (champion)');
-            return 'correct';
-          }
-          if (value === actualResults.midSeasonCupChampion[1]) {
-            console.log('Returning partial (runner-up)');
-            return 'partial';
-          }
-          console.log('Returning incorrect (not in top 2)');
+          if (value === actualResults.midSeasonCupChampion[0]) return 'correct';
+          if (value === actualResults.midSeasonCupChampion[1]) return 'partial';
           return 'incorrect';
         }
-        console.log('No valid results found');
         return '';
       }
       case 'mvp':
@@ -210,92 +241,105 @@ function ViewPicks() {
   };
 
   // Add the calculateSelectionPoints function
-  const calculateSelectionPoints = (category, value, index) => {
+  const calculateSelectionPoints = (category, value) => {
     if (!actualResults || !userPicks) return 0;
-
+    
     // Map component categories to actual results categories
     const categoryMapping = {
-      'sixthMan': 'smoy',
-      'coachOfTheYear': 'coty',
-      'roty': 'roy'
+      ecfWinner: 'eastFinals',
+      ecfLoser: 'eastFinals',
+      wcfWinner: 'westFinals',
+      wcfLoser: 'westFinals'
     };
 
-    const actualCategory = categoryMapping[category] || category;
-    const actualValue = actualResults[actualCategory];
+    // Handle conference finals cases
+    if (category === 'ecfWinner' || category === 'ecfLoser') {
+      const finalsTeams = actualResults.eastFinals || [];
+      if (finalsTeams.includes(value)) {
+        return 5; // Award 5 points for each correct team in the finals
+      }
+    }
+    
+    if (category === 'wcfWinner' || category === 'wcfLoser') {
+      const finalsTeams = actualResults.westFinals || [];
+      if (finalsTeams.includes(value)) {
+        return 5; // Award 5 points for each correct team in the finals
+      }
+    }
 
-    if (!actualValue) return 0;
-
+    // Handle other categories
     switch (category) {
       case 'eastPlayoffTeams':
-      case 'westPlayoffTeams': {
-        const actualTeams = category === 'eastPlayoffTeams' ? actualResults.eastPlayoffTeams : actualResults.westPlayoffTeams;
-        if (value === actualTeams[index]) return SCORING_WEIGHTS.eastPlayoffTeam; // Correct team in correct position
-        if (actualTeams.includes(value)) return SCORING_WEIGHTS.playoffTeamWrongPosition; // Team made playoffs but wrong position
-        return 0;
-      }
-      case 'ecfWinner':
-      case 'wcfWinner': {
-        if (value === actualValue) return SCORING_WEIGHTS.eastFinals; // Correct conference finalist
-        return 0;
-      }
-      case 'nbaChampion': {
-        if (value === actualValue) return SCORING_WEIGHTS.champion; // Correct champion
-        return 0;
-      }
-      case 'midSeasonCupChampion': {
-        if (Array.isArray(actualValue) && actualValue.length >= 2) {
-          if (value === actualValue[0]) return SCORING_WEIGHTS.midSeasonCupChampion; // Champion
-          if (value === actualValue[1]) return SCORING_WEIGHTS.midSeasonCupRunnerUp; // Runner-up
-          return 0;
+      case 'westPlayoffTeams':
+        const playoffTeams = category === 'eastPlayoffTeams' ? 
+          actualResults.eastPlayoffTeams : 
+          actualResults.westPlayoffTeams;
+        if (playoffTeams && playoffTeams.includes(value)) {
+          return 5; // Award 5 points for each correct playoff team
         }
-        return 0;
-      }
+        break;
+      case 'nbaChampion':
+        if (value === actualResults.champion) {
+          return 3; // Award 3 points for correct champion
+        }
+        break;
       case 'mvp':
+        if (actualResults.mvp && actualResults.mvp[0] === value) {
+          return 15; // Award 15 points for correct MVP
+        }
+        break;
       case 'dpoy':
-      case 'roy':
+        if (actualResults.dpoy && actualResults.dpoy[0] === value) {
+          return 15; // Award 15 points for correct DPOY
+        }
+        break;
+      case 'roty':
+        if (actualResults.roy && actualResults.roy[0] === value) {
+          return 15; // Award 15 points for correct ROY
+        }
+        break;
       case 'mip':
+        if (actualResults.mip && actualResults.mip[0] === value) {
+          return 15; // Award 15 points for correct MIP
+        }
+        break;
       case 'smoy':
+        if (actualResults.smoy && actualResults.smoy[0] === value) {
+          return 15; // Award 15 points for correct SMOY
+        }
+        break;
       case 'coty':
-      case 'sixthMan':
-      case 'coachOfTheYear':
-      case 'roty': {
-        if (Array.isArray(actualValue)) {
-          const position = actualValue.indexOf(value);
-          if (position === 0) return SCORING_WEIGHTS.mvp; // Winner
-          if (position === 1) return SCORING_WEIGHTS.mvpSecond; // 2nd place
-          if (position === 2) return SCORING_WEIGHTS.mvpThird;  // 3rd place
-          if (position === 3) return SCORING_WEIGHTS.mvpFourth;  // 4th place
-          if (position === 4) return SCORING_WEIGHTS.mvpFifth;  // 5th place
+        if (actualResults.coty && actualResults.coty[0] === value) {
+          return 15; // Award 15 points for correct COTY
         }
-        return 0;
-      }
+        break;
       case 'allNBAFirstTeam':
+        if (actualResults.allNbaFirst && actualResults.allNbaFirst.includes(value)) {
+          return 2; // Award 2 points for each correct All-NBA First Team selection
+        }
+        break;
       case 'allNBASecondTeam':
-      case 'allNBAThirdTeam': {
-        const actualTeam = category === 'allNBAFirstTeam' ? actualResults.allNbaFirst :
-                          category === 'allNBASecondTeam' ? actualResults.allNbaSecond :
-                          actualResults.allNbaThird;
-        if (Array.isArray(actualTeam) && actualTeam.includes(value)) {
-          return category === 'allNBAFirstTeam' ? SCORING_WEIGHTS.allNbaFirst :
-                 category === 'allNBASecondTeam' ? SCORING_WEIGHTS.allNbaSecond :
-                 SCORING_WEIGHTS.allNbaThird;
+        if (actualResults.allNbaSecond && actualResults.allNbaSecond.includes(value)) {
+          return 1; // Award 1 point for each correct All-NBA Second Team selection
         }
-        return 0;
-      }
-      case 'worstTeam': {
-        if (Array.isArray(actualValue)) {
-          const position = actualValue.indexOf(value);
-          if (position === 0) return SCORING_WEIGHTS.worstTeam; // Worst team
-          if (position === 1) return SCORING_WEIGHTS.worstTeamSecond; // 2nd worst
-          if (position === 2) return SCORING_WEIGHTS.worstTeamThird; // 3rd worst
-          if (position === 3) return SCORING_WEIGHTS.worstTeamFourth; // 4th worst
-          if (position === 4) return SCORING_WEIGHTS.worstTeamFifth; // 5th worst
+        break;
+      case 'allNBAThirdTeam':
+        if (actualResults.allNbaThird && actualResults.allNbaThird.includes(value)) {
+          return 1; // Award 1 point for each correct All-NBA Third Team selection
         }
-        return 0;
-      }
-      default:
-        return 0;
+        break;
+      case 'worstTeam':
+        if (actualResults.worstTeam && actualResults.worstTeam[0] === value) {
+          return 5; // Award 5 points for correct worst team
+        }
+        break;
+      case 'midSeasonCupChampion':
+        if (actualResults.midSeasonCupChampion && actualResults.midSeasonCupChampion[0] === value) {
+          return 20; // Award 20 points for correct mid-season cup champion
+        }
+        break;
     }
+    return 0;
   };
 
   // Render the selections sections
@@ -326,7 +370,7 @@ function ViewPicks() {
                 />
                 <span>{item}</span>
                 <div className="points-display">
-                  {calculateSelectionPoints(category, item, index) > 0 ? `+${calculateSelectionPoints(category, item, index)}` : ''}
+                  {calculateSelectionPoints(category, item) > 0 ? `+${calculateSelectionPoints(category, item)}` : ''}
                 </div>
               </div>
             )}

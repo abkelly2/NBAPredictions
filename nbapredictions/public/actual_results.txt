@@ -21,8 +21,12 @@ Golden State Warriors
 Memphis Grizzlies
 
 # East Finals
+New York Knicks
+Indiana Pacers
 
 # West Finals
+Minnesota Timberwolves
+Oklahoma City Thunder
 
 
 # MVP

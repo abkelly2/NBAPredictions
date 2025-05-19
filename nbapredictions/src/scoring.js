@@ -9,8 +9,9 @@ export const SCORING_WEIGHTS = {
   playoffTeamWrongPosition: 2,  // Wrong position
   
   // Conference Finals
-  eastFinals: 2,
-  westFinals: 2,
+  eastFinals: 5,  // Per correct team
+  westFinals: 5,  // Per correct team
+  conferenceFinalsBonus: 5,  // Bonus for getting both teams right
   
   // Individual Awards
   mvp: 15,  // Winner
@@ -83,19 +84,35 @@ function calculatePlayoffPoints(userPicks, actualResults) {
 function calculateConferenceFinalsPoints(userPicks, actualResults) {
   let points = 0;
   console.log('Calculating conference finals points...');
-  console.log('ECF Winner:', userPicks.ecfWinner, 'Actual:', actualResults.eastFinals[0]);
-  console.log('WCF Winner:', userPicks.wcfWinner, 'Actual:', actualResults.westFinals[0]);
   
   // East Finals
-  if (userPicks.ecfWinner === actualResults.eastFinals[0]) {
+  const eastCorrectTeams = [];
+  if (userPicks.ecfWinner === actualResults.eastFinals[0] || userPicks.ecfWinner === actualResults.eastFinals[1]) {
     points += SCORING_WEIGHTS.eastFinals;
-    console.log('Added ECF points:', SCORING_WEIGHTS.eastFinals);
+    eastCorrectTeams.push(userPicks.ecfWinner);
+  }
+  if (userPicks.ecfLoser === actualResults.eastFinals[0] || userPicks.ecfLoser === actualResults.eastFinals[1]) {
+    points += SCORING_WEIGHTS.eastFinals;
+    eastCorrectTeams.push(userPicks.ecfLoser);
+  }
+  // Bonus for getting both teams right
+  if (eastCorrectTeams.length === 2) {
+    points += SCORING_WEIGHTS.conferenceFinalsBonus;
   }
   
   // West Finals
-  if (userPicks.wcfWinner === actualResults.westFinals[0]) {
+  const westCorrectTeams = [];
+  if (userPicks.wcfWinner === actualResults.westFinals[0] || userPicks.wcfWinner === actualResults.westFinals[1]) {
     points += SCORING_WEIGHTS.westFinals;
-    console.log('Added WCF points:', SCORING_WEIGHTS.westFinals);
+    westCorrectTeams.push(userPicks.wcfWinner);
+  }
+  if (userPicks.wcfLoser === actualResults.westFinals[0] || userPicks.wcfLoser === actualResults.westFinals[1]) {
+    points += SCORING_WEIGHTS.westFinals;
+    westCorrectTeams.push(userPicks.wcfLoser);
+  }
+  // Bonus for getting both teams right
+  if (westCorrectTeams.length === 2) {
+    points += SCORING_WEIGHTS.conferenceFinalsBonus;
   }
   
   console.log('Total conference finals points:', points);
@@ -282,7 +299,12 @@ export function calculateUserScore(userPicks, actualResults) {
 
 // Function to parse the actual results text file
 export function parseActualResults(text) {
+  console.log('Starting to parse actual results...');
+  console.log('Raw text:', text);
+  
   const lines = text.split('\n');
+  console.log('Split into lines:', lines);
+  
   const results = {
     eastPlayoffTeams: [],
     westPlayoffTeams: [],
@@ -307,71 +329,103 @@ export function parseActualResults(text) {
   
   for (const line of lines) {
     const trimmedLine = line.trim();
-    if (!trimmedLine) continue;
+    console.log('Processing line:', { original: line, trimmed: trimmedLine, currentSection });
+    
+    if (!trimmedLine) {
+      console.log('Skipping empty line');
+      continue;
+    }
 
     if (trimmedLine.startsWith('#')) {
-      currentSection = trimmedLine.substring(1).trim().toLowerCase();
+      // Extract the section name exactly as it appears in the file
+      currentSection = trimmedLine.substring(1).trim();
+      console.log('Found new section:', currentSection);
+      continue;
+    }
+
+    // Skip empty lines
+    if (!trimmedLine) {
+      console.log('Skipping empty trimmed line');
       continue;
     }
 
     switch (currentSection) {
-      case 'east playoff teams':
+      case 'East Playoff Teams':
+        console.log('Adding to eastPlayoffTeams:', trimmedLine);
         results.eastPlayoffTeams.push(trimmedLine);
         break;
-      case 'west playoff teams':
+      case 'West Playoff Teams':
+        console.log('Adding to westPlayoffTeams:', trimmedLine);
         results.westPlayoffTeams.push(trimmedLine);
         break;
-      case 'champion':
+      case 'Champion':
+        console.log('Setting champion:', trimmedLine);
         results.champion = trimmedLine;
         break;
-      case 'east finals':
+      case 'East Finals':
+        console.log('Adding to eastFinals:', trimmedLine);
         results.eastFinals.push(trimmedLine);
         break;
-      case 'west finals':
+      case 'West Finals':
+        console.log('Adding to westFinals:', trimmedLine);
         results.westFinals.push(trimmedLine);
         break;
-      case 'mvp':
+      case 'MVP':
+        console.log('Adding to mvp:', trimmedLine);
         results.mvp.push(trimmedLine);
         break;
-      case 'dpoy':
+      case 'DPOY':
+        console.log('Adding to dpoy:', trimmedLine);
         results.dpoy.push(trimmedLine);
         break;
-      case 'roy':
+      case 'ROY':
+        console.log('Adding to roy:', trimmedLine);
         results.roy.push(trimmedLine);
         break;
-      case 'mip':
+      case 'MIP':
+        console.log('Adding to mip:', trimmedLine);
         results.mip.push(trimmedLine);
         break;
-      case 'smoy':
+      case 'SMOY':
+        console.log('Adding to smoy:', trimmedLine);
         results.smoy.push(trimmedLine);
         break;
-      case 'coty':
+      case 'COTY':
+        console.log('Adding to coty:', trimmedLine);
         results.coty.push(trimmedLine);
         break;
-      case 'all-nba first team':
+      case 'All-NBA First Team':
+        console.log('Adding to allNbaFirst:', trimmedLine);
         results.allNbaFirst.push(trimmedLine);
         break;
-      case 'all-nba second team':
+      case 'All-NBA Second Team':
+        console.log('Adding to allNbaSecond:', trimmedLine);
         results.allNbaSecond.push(trimmedLine);
         break;
-      case 'all-nba third team':
+      case 'All-NBA Third Team':
+        console.log('Adding to allNbaThird:', trimmedLine);
         results.allNbaThird.push(trimmedLine);
         break;
-      case 'worst team':
+      case 'Worst Team':
+        console.log('Adding to worstTeam:', trimmedLine);
         results.worstTeam.push(trimmedLine);
         break;
-      case 'mid-season cup champion':
+      case 'Mid-Season Cup Champion':
+        console.log('Adding to midSeasonCupChampion:', trimmedLine);
         results.midSeasonCupChampion.push(trimmedLine);
         break;
-      case 'player ppg':
+      case 'Player PPG':
         const [playerName, ppg] = trimmedLine.split(':').map(s => s.trim());
         if (playerName && ppg) {
+          console.log('Adding to playerPPG:', { playerName, ppg });
           results.playerPPG[playerName] = parseFloat(ppg);
         }
         break;
+      default:
+        console.log('No matching section for:', currentSection);
     }
   }
 
-  console.log('Parsed actual results:', results);
+  console.log('Final parsed results:', results);
   return results;
 } 
